@@ -1,2 +1,4 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+node_modules/
+View/Res/images/attachment
+data/
+.VSCodeCounter
