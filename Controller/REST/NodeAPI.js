@@ -1,11 +1,11 @@
 const express = require('express')
 const router = express.Router()
-const Validator = require("./Middleware/Validator")
+const Validator = require("../Middleware/Validator")
 const bcrypt = require("bcryptjs")
 const crypto = require("crypto")
-const Auth = require("./Middleware/Authenticate")
-const Node_ = require("../Model/Node_")
-const NodeDir = require("../Model/NodeDir")
+const Auth = require("../Middleware/Authenticate")
+const Node_ = require("../../Model/Node_")
+const NodeDir = require("../../Model/NodeDir")
 
 router.post("/", [
     Auth.verifyJWT(),
