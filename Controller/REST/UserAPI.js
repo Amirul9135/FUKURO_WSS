@@ -1,13 +1,13 @@
 const express = require('express')
-const User = require("../Model/User")
+const User = require("../../Model/User")
 const router = express.Router()
-const Validator = require("./Middleware/Validator")
+const Validator = require("../Middleware/Validator")
 const bcrypt = require("bcryptjs")
-const ServerCache = require("../server_cache")
+const ServerCache = require("../../server_cache")
 const crypto = require("crypto")
 const jwt = require("jsonwebtoken");
 const jwtsCache = new ServerCache('data/jwts')
-const Auth = require("./Middleware/Authenticate")
+const Auth = require("../Middleware/Authenticate")
 
 router.post("/", [
     Validator.checkString("name", "name is required"),

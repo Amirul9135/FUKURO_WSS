@@ -24,7 +24,7 @@ class Authenticate {
                     req.user = decoded.user;
                     return next();
                 }
-                catch {
+                catch (err) {
                     console.log(err)
                     return res.status(401).json({ message: "Invalid Token" });
                 }

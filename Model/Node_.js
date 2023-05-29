@@ -12,12 +12,12 @@ module.exports = class Node_ {
         var strSql = "INSERT INTO node(name,description,ipAddress,passKey) VALUES(" + db.escape(this.#name)
             + "," + db.escape(this.#description) + "," + db.escape(this.#ipAddress) + "," + db.escape(this.#passKey) + ")"
         return new Promise(function (resolve, reject) {
-            db.query(strSql, function (result, err) {
+            db.query(strSql, function (err, result) {
                 if (err) {
                     reject(err)
                 }
                 else {
-                    resolve({ id: result.insertId })
+                    resolve(result.insertId)
                 }
             })
         })
@@ -39,13 +39,44 @@ module.exports = class Node_ {
         })
     }
 
+    static findNode(nodeId, userId) {
+        var strSQL = "SELECT n.nodeId,n.name,n.description,n.ipAddress FROM node n JOIN node_dir d ON n.nodeId=d.nodeId JOIN node_dir_access a ON a.pathId=d.pathId"
+            + " WHERE n.nodeId=" + db.escape(nodeId) + " AND a.userId=" + db.escape(userId)
+        return new Promise(function (resolve, reject) {
+            db.query(strSQL, function (err, result) {
+                if (err) {
+                    return reject(err)
+                }
+                else {
+                    result = JSON.parse(JSON.stringify(result))
+                    if (result.length == 0) {
+                        return reject({ message: "no record" })
+                    }
+                    resolve(result[0])
+                }
+            })
+        })
+    }
+    static findUserAccessibleNodes(userId) {
+        var strSQL = "SELECT n.nodeId,n.name,n.description,n.ipAddress FROM node n JOIN node_dir d ON n.nodeId=d.nodeId JOIN node_dir_access a ON a.pathId=d.pathId"
+            + " WHERE a.userId=" + db.escape(userId)
+        return new Promise(function (resolve, reject) {
+            db.query(strSQL, function (err, result) {
+                if (err) {
+                    return reject(err)
+                }
+                else {
+                    result = JSON.parse(JSON.stringify(result))
+                    if (result.length == 0) {
+                        return reject({ message: "no record" })
+                    }
+                    resolve(result)
+                }
+            })
+        })
+    }
 
     constructor(jObj = null) {
-        this.#nodeId = -1;
-        this.#name = "";
-        this.#description = "";
-        this.#ipAddress = "";
-        this.#passKey = "";
         if (jObj != null) {
             if (jObj.hasOwnProperty("nodeId")) {
                 this.#nodeId = jObj["nodeId"];

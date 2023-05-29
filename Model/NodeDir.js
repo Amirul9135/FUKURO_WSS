@@ -15,7 +15,7 @@ module.exports = class NodeDir {
                     reject(err)
                 }
                 else {
-                    resolve({ id: result.insertId })
+                    resolve(result.insertId)
                 }
             })
         })
@@ -66,10 +66,6 @@ module.exports = class NodeDir {
     }
 
     constructor(jObj = null) {
-        this.#pathId = -1;
-        this.#nodeId = -1;
-        this.#path = "";
-        this.#label = "";
         if (jObj != null) {
             if (jObj.hasOwnProperty("pathId")) {
                 this.#pathId = jObj["pathId"];
