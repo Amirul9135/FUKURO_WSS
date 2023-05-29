@@ -20,7 +20,7 @@ module.exports = class User {
                     reject(err);
                 }
                 else {
-                    resolve();
+                    resolve({ id: result.insertId })
                 }
             })
         })
@@ -57,7 +57,7 @@ module.exports = class User {
                     reject(err)
                 }
                 else[
-                    resolve()
+                    resolve({ affected: result.affectedRows })
                 ]
             })
         })
