@@ -40,7 +40,7 @@ module.exports = class Node_ {
     }
 
     static findNode(nodeId, userId) {
-        var strSQL = "SELECT n.nodeId,n.name,n.description,n.ipAddress FROM node n JOIN node_dir d ON n.nodeId=d.nodeId JOIN node_dir_access a ON a.pathId=d.pathId"
+        var strSQL = "SELECT n.nodeId,n.name,n.description,n.ipAddress,n.passKey FROM node n JOIN node_dir d ON n.nodeId=d.nodeId JOIN node_dir_access a ON a.pathId=d.pathId"
             + " WHERE n.nodeId=" + db.escape(nodeId) + " AND a.userId=" + db.escape(userId)
         return new Promise(function (resolve, reject) {
             db.query(strSQL, function (err, result) {

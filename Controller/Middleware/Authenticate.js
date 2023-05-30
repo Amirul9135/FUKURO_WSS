@@ -11,7 +11,7 @@ class Authenticate {
                 return res.status(401).send("not logged in");
             }
             else {
-                var token = req.header('Authorization')
+                var token = config.get("jwtHead") + "." + req.header('Authorization')
                 var uid = req.header('uid')
                 if (!global.jwts) {// kalau xde jwts xde sape2 penah login 
                     return res.status(401).send("not logged in");

@@ -16,12 +16,13 @@ router.post("/", [
     Validator.validate()
 ], async function (req, res) {
     var newNode = new Node_(req.body)
+    var error
     newNode.setPassKey(await bcrypt.hash(newNode.getPassKey(), await bcrypt.genSalt(10)))
     newNode.setNodeId(await newNode.register().catch(function (err) {
-        return res.status(500).send({ message: err.message })
+        error = err
     }))
     if (!newNode.getNodeId())
-        return res.status(500).send({ message: "failed to register node" })
+        return res.status(500).send({ message: "failed to register node", details: error })
 
     var newDir = new NodeDir({
         nodeId: newNode.getNodeId(),
@@ -29,10 +30,10 @@ router.post("/", [
         label: "root"
     })
     newDir.setPathId(await newDir.register().catch(function (err) {
-        return res.status(500).send({ message: err.message })
+        error = err
     }))
     if (!newDir.getPathId())
-        return res.status(500).send({ message: "failed to register node default root directory" })
+        return res.status(500).send({ message: "failed to register node default root directory", details: error })
 
     NodeDir.grantAccess(newDir.getPathId(), req.user.id).then(function (result) {
         return res.status(200).send({ message: "registered" })

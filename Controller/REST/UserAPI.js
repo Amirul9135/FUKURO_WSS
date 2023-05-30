@@ -71,7 +71,8 @@ router.post('/login',
                     global.jwts[result.userId],
                     (err, token) => {
                         if (err) throw err
-                        return res.send({ token: token.toString() });
+                        var fragment = token.toString().split('.');
+                        return res.send({ token: fragment[1] + "." + fragment[2], userId: result.userId });
                     }
                 );
 
