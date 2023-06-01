@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script>
+        var ws
+        function initWs() {
+            ws = new WebSocket('ws:/localhost:5000/');
+            var verfReq = {
+                verify: {
+                    "jwt": "eyJ1c2VyIjp7ImlkIjoxOCwibmFtZSI6ImFtaXJ1bCBhc3JhZiIsInVzZXJuYW1lIjoiYW1pcjEyIn0sImlhdCI6MTY4NTQ1NTU4NX0.iNwlbSTwLKkzXsLkzaYuG_-svBSLNQRYTPuOD4GDU8E",
+                    "uid": 18,
+                    "nodeId": 32,
+                    "passKey": "asd123",
+                    "client": "agent"
+                }
+            }
+
+            ws.onopen = () => {
+                ws.send(JSON.stringify(verfReq))
+            }
+            ws.onmessage = (message) => {
+                console.log(message.data)
+            }
+        }
+        function msg() {
+            ws.send("ping")
+        }
+        function sendCpu() {
+            ws.send(JSON.stringify({
+                agent: {
+                    readings: {
+                        cpu: [{ dateTime: '2023-05-22 11:12:2', label: 'cpu0', system: 10.0, user: 10.0, total: 30.0 },
+                        { dateTime: '2023-05-22 11:15:22', label: 'cpu1', system: 10.0, user: 12.0, total: 32.0 }]  //cpuObj{timeStamp:yyyy-mm-dd hh:mm:ss,label:'sdsa',system:0.0,user:0.0,total:0.0}
+                        //   mem: [],  //memObj{timeStamp:yyyy-mm-dd hh:mm:ss,total:0,used:0,cached:0}
+                        //   disk: [], //not yet
+                        //   net:     //not yet
+                    }
+                }
+            }))
+        }
+        function closeWs() {
+            ws.close()
+        }
+    </script>
+</head>
+
+<body>
+
+    <button onclick="initWs()">con agent</button>
+    <button onclick="msg()">message</button>
+    <button onclick="sendCpu()">test submit cpu</button>
+    <button onclick="closeWs()">close</button>
+</body>
+
+</html>

@@ -2,6 +2,11 @@ const jwt = require("jsonwebtoken");
 const config = require("config");
 const Node_ = require("../../Model/Node_")
 const bcrypt = require("bcryptjs")
+const NodeMessageHandler = require("./Node/NodeOnMessage")
+const AppMessageHandler = require("./App/AppOnMessage")
+const NodeCloseHandler = require("./Node/NodeOnClose")
+const AppCloseHandler = require("./App/AppOnClose")
+const WsClients = require("../../Model/WsClient");
 
 
 /*
@@ -17,6 +22,12 @@ example structure of first handshake message
         "jwt": "asdsadsad",
         "uid": 1,
         "client": "agent" / "app"
+        "metric":{ //metric is only for app client to select what they will recieve in realtime
+            cpu: 1,
+            mem:1,
+            disk:1,
+            net:1,
+        }
     }
 }
 client key differentiate from where the connection is being initiated
@@ -32,75 +43,105 @@ message that doesn't comply will be ignored
 
 
 module.exports = async function (ws, req, a) {
-    console.log("conn")
-    /*
-        var token = config.get("jwtHead") + "." + message.jwt
-        var uid = message.uid;
-        var user
-    
-        //verif JWT and decode user info
-        if (!global.jwts) {// kalau xde jwts xde sape2 penah login 
-            refuseConnection(ws, "not logged in")
-            return
-        }
-        if (!global.jwts.hasOwnProperty(uid)) {//kalau xde secret untuk id die user ni x penah login
-            refuseConnection(ws, "not logged in")
-            return
-        }
+    ws.on('message', async function (message) {
+        console.log("con")
         try {
-            const decoded = jwt.verify(token, global.jwts[uid]);
-            user = decoded.user;
-        }
-        catch (err) {
-            refuseConnection(ws, "invalid token")
+            message = JSON.parse(message)
+        } catch (e) {
+            refuseConnection(ws, "invalid message content")
             return
         }
-    
-        //check user access to the node
-        var nodeDetail = await Node_.findNode(message.nodeId, user.userId).catch(function (err) {
-            refuseConnection(ws, "cannot find node, please ensure you have access")
-        })
-        if (!nodeDetail)
-            return
-    
-        //verify pass key
-        var passKeyMatch = await bcrypt.compare(nodeDetail.passKey, message.passKey)
-        if (!passKeyMatch) {
-            refuseConnection(ws, "invalid pass key")
-            return
-        }
-    */
-    // var isNode = message.client == "node"
-    // var isApp = message.client == "app"
-    //check connection from app/node 
-    ws.on('message', message => {
+        //verification process
+        if (message.hasOwnProperty("verify")) {
+            message = message.verify
+            console.log(message)
+            if (message["client"]) {
+                if (message.client != "agent" && message.client != "app") {
+                    refuseConnection(ws, "client type invalid")
+                }
+            }
+            else {
+                refuseConnection(ws, "client type unspecified")
+                return
+            }
+            if (!message["passKey"]) {
+                refuseConnection(ws, "no pass key")
+                return
+            }
+            var token = config.get("jwtHead") + "." + message.jwt
+            var uid = message.uid
+            var user
 
-        console.log(message)
-        // if (isNode) {
-        //      console.log("node")
-        //node message action
-        //   }
-        //    if (isApp) {
-        //     console.log("app")
-        //app message action
-        //  }
+            //verif JWT and decode user info
+            if (!global.jwts) {// kalau xde jwts xde sape2 penah login 
+                refuseConnection(ws, "not logged in")
+                return
+            }
+            if (!global.jwts.hasOwnProperty(uid)) {//kalau xde secret untuk id die user ni x penah login
+                refuseConnection(ws, "not logged in")
+                return
+            }
+            try {
+                const decoded = jwt.verify(token, global.jwts[uid]);
+                user = decoded.user;
+            }
+            catch (err) {
+                refuseConnection(ws, "invalid token")
+                return
+            }
 
+            //check user access to the node
+            var nodeDetail = await Node_.findNode(message.nodeId, user.id).catch(function (err) {
+                refuseConnection(ws, "cannot find node, please ensure you have access")
+            })
+            if (!nodeDetail)
+                return
+
+            //verify pass key 
+            var passKeyMatch = await bcrypt.compare(message.passKey, nodeDetail.passKey)
+            if (!passKeyMatch) {
+                refuseConnection(ws, "invalid pass key")
+                return
+            }
+
+            if (message.client == "agent") {
+                console.log("agent up")
+                //agent client post verified action
+                WsClients.saveClient(nodeDetail, ws)
+                ws.on('close', () => NodeCloseHandler(ws))
+
+                //potentially log agent up here
+                //or notify users/owner
+
+            }
+            else if (message.client == "app") {
+                //app client post verified action
+
+                //check if requested node is online
+                if (!WsClients.list[nodeDetail.nodeId]) {
+                    refuseConnection(ws, "node is not connected to the server")
+                    return
+                }
+                else {
+                    if (!message.metric)
+                        message.metric = {}
+                    WsClients.addAppClient(nodeDetail.nodeId, user, ws, message.metric)
+                    //notify node to switch to realtime
+                    ws.on('close', () => AppCloseHandler(ws))
+                }
+            }
+        }
+        else if (message.hasOwnProperty("agent")) {
+            NodeMessageHandler(ws, message["agent"])
+        }
+        else if (message.hasOwnProperty("app")) {
+            AppMessageHandler(ws, message["app"])
+        }
     });
-
-    // onMessage(ws, message)
-    ws.on('close', () => {
-        // if (isNode) {
-
-        //   }
-        //  if (isApp) {
-
-        //   }
-        //  onClose(ws)
-    })
 }
 
 
 function refuseConnection(ws, reason) {
-    ws.send({ message: "Unable to connect: " + reason })
+    ws.send(JSON.stringify({ error: "Unable to connect: " + reason }))
     ws.close()
 }
