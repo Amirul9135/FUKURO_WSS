@@ -8,12 +8,12 @@ module.exports = class User {
     #email
     #phone
     #pin
-    #isActive
+    #deactivated
 
     register() {
-        var strSql = "INSERT INTO user(name,username,password,email,phone,pin,isActive) VALUES ("
+        var strSql = "INSERT INTO user(name,username,password,email,phone,pin) VALUES ("
             + db.escape(this.#name) + "," + db.escape(this.#username) + "," + db.escape(this.#password) + ","
-            + db.escape(this.#email) + "," + db.escape(this.#phone) + "," + db.escape(this.#pin) + ", '1')"
+            + db.escape(this.#email) + "," + db.escape(this.#phone) + "," + db.escape(this.#pin) + ")"
         return new Promise(function (resolve, reject) {
             db.query(strSql, function (err, result) {
                 if (err) {
@@ -27,7 +27,7 @@ module.exports = class User {
     }
 
     login() {
-        var strSql = "SELECT * FROM user WHERE username=" + db.escape(this.#username) + " AND isActive='1'";
+        var strSql = "SELECT * FROM user WHERE username=" + db.escape(this.#username) + " AND deactivated IS NULL";
         return new Promise(function (resolve, reject) {
             db.query(strSql, function (err, result) {
                 if (err) {
@@ -64,7 +64,7 @@ module.exports = class User {
     }
 
     static findByUserId(userId) {
-        var strSQL = "SELECT name,username,email,phone,isActive FROM user WHERE userId=" + db.escape(userId)
+        var strSQL = "SELECT name,username,email,phone,deactivated FROM user WHERE userId=" + db.escape(userId)
         return new Promise(function (resolve, reject) {
             db.query(strSQL, function (err, result) {
                 if (err) {
@@ -93,7 +93,7 @@ module.exports = class User {
         this.#email = "";
         this.#phone = "";
         this.#pin = "";
-        this.#isActive = "";
+        this.#deactivated = "";
         if (jObj != null) {
             if (jObj.hasOwnProperty("userId")) {
                 this.#userId = jObj["userId"];
@@ -116,8 +116,8 @@ module.exports = class User {
             if (jObj.hasOwnProperty("pin")) {
                 this.#pin = jObj["pin"];
             }
-            if (jObj.hasOwnProperty("isActive")) {
-                this.#isActive = jObj["isActive"];
+            if (jObj.hasOwnProperty("deactivated")) {
+                this.#deactivated = jObj["deactivated"];
             }
         }
     }
@@ -171,11 +171,14 @@ module.exports = class User {
         return this.#pin;
     }
 
-    setIsActive(isActive) {
-        this.#isActive = isActive
+    deactivate() {
+        this.#deactivated = 1
     }
-    getIsActive() {
-        return this.#isActive;
+    activate(){
+        this.#deactivated = null
+    }
+    getStatus() {
+        return this.#deactivated;
     }
 
 

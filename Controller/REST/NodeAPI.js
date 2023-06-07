@@ -7,6 +7,30 @@ const Auth = require("../Middleware/Authenticate")
 const Node_ = require("../../Model/Node_")
 const NodeDir = require("../../Model/NodeDir")
 
+
+router.get("/access",[ 
+    Auth.verifyJWT(),
+    Validator.checkNumber("nodeId",{min:1}),
+    Validator.checkString("passKey"),
+    Validator.validate()
+], function(req,res){
+    console.log("here")
+    Node_.findNode(req.body.nodeId, req.user.id).then(async function(result){
+        
+        var isMatch = await bcrypt.compare(req.body.passKey, result.passKey)
+        result.passKey = null
+        if(isMatch)
+            return res.status(200).send(result)
+        else
+            return res.status(401).send({message:"no access"})
+
+    }).catch(function(err){
+        console.log(err)
+        return res.status(500).send({message:err.message})
+    })
+}
+)
+
 router.post("/", [
     Auth.verifyJWT(),
     Validator.checkString("name"),
@@ -57,11 +81,13 @@ router.get("/:nodeId",
     Auth.verifyJWT(),
     function (req, res) {
         Node_.findNode(req.params.nodeId, req.user.id).then(function (result) {
+            result.passKey = null;
             return res.status(200).send(result)
         }).catch(function (err) {
             return res.status(500).send({ message: err.message })
         })
 
     })
+
 
 module.exports = router

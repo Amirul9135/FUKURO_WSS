@@ -41,6 +41,9 @@ router.post("/", [
 
 router.post('/login',
     [
+        function(req,res,next){
+            console.log(req.body)
+        next()},
         Validator.checkString("username", { min: 6 }, "username must be at least 6 character"),
         Validator.checkString("password", { min: 6 }, "password must be at least 6 character"),
         Validator.validate()
@@ -52,13 +55,14 @@ router.post('/login',
             if (isMatch) {
                 if (!global.jwts)//if no jwts yet initialize
                     global.jwts = {};
-                var secret = crypto.randomBytes(32).toString('hex');
+                var secret = ""
                 if (global.jwts && global.jwts.hasOwnProperty(result.userId)) {
-                    while (secret == global.jwts[result.userId]) {
-                        secret = crypto.randomBytes(32).toString('hex');
-                    }
+                    secret = global.jwts[result.userId] 
                 }
-                global.jwts[result.userId] = secret;
+                else{
+                    secret = crypto.randomBytes(32).toString('hex');
+                    global.jwts[result.userId] = secret;
+                }
                 jwtsCache.mcache.setItem(String(result.userId), secret)
                 var payload = {
                     user: {
@@ -72,7 +76,7 @@ router.post('/login',
                     (err, token) => {
                         if (err) throw err
                         var fragment = token.toString().split('.');
-                        return res.send({ token: fragment[1] + "." + fragment[2], userId: result.userId });
+                        return res.send({ token: fragment[1] + "." + fragment[2], uid: result.userId });
                     }
                 );
 

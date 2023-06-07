@@ -1,6 +1,8 @@
+
+const WsClients = require("../../../Model/WsClient");
 module.exports = function onClose(ws) {
 
-    console.log(ws)
-    console.log("app closed")
+    WsClients.removeAppClient(ws)
+    
 }
 

@@ -19,6 +19,7 @@ class WsClients {
             ws.client = {
                 type: "app",
                 data: userData,
+                nodeId: nodeId,
                 metric: metric
                 /*    "metric":{ //metric is only for app client to select what they will recieve in realtime
                         cpu: 1,
@@ -27,9 +28,30 @@ class WsClients {
                         net:1,
                     }*/
             }
-            this.list[nodeId].client.app.push(ws)
-            this.list[nodeId].send(JSON.stringify({ monitoring: true }))
+            this.list[nodeId].client.app.push(ws) 
             ws.send(JSON.stringify({ info: "Connected to node: " + this.list[nodeId].client.data.name }))
+            this.list[nodeId].send("live interval")
+        }
+    }
+
+    removeAppClient(ws){
+        console.log('off app')
+        if(this.list[ws.client.nodeId]){
+            this.list[ws.client.nodeId].client.app = this.list[ws.client.nodeId].client.app.filter(appws => appws.client.data.id != ws.client.data.id)
+            console.log(ws.client.data)
+            console.log(this.list[ws.client.nodeId].client.app.length)
+            if(this.list[ws.client.nodeId].client.app.length == 0){//empty no 1 watching
+                this.list[ws.client.nodeId].send("norm interval")
+            }
+        }
+    }
+
+    removeAgentClient(ws){
+        if(this.list[ws.client.data.nodeId]){
+            ws.client.app.forEach(apws => {
+                apws.send(JSON.stringify({"warning":"node offline"}))
+            });
+            delete this.list[ws.client.data.nodeId]
         }
     }
 }

@@ -103,12 +103,15 @@ module.exports = async function (ws, req, a) {
                 refuseConnection(ws, "invalid pass key")
                 return
             }
-
+            console.log("sini")
             if (message.client == "agent") {
                 console.log("agent up")
                 //agent client post verified action
                 WsClients.saveClient(nodeDetail, ws)
                 ws.on('close', () => NodeCloseHandler(ws))
+                //console.log(ws)
+                ws.on('message', (msg) => {NodeMessageHandler(ws,msg)})
+               // ws.onmessage = NodeMessageHandler.bind(ws,message) 
 
                 //potentially log agent up here
                 //or notify users/owner
@@ -128,16 +131,15 @@ module.exports = async function (ws, req, a) {
                     WsClients.addAppClient(nodeDetail.nodeId, user, ws, message.metric)
                     //notify node to switch to realtime
                     ws.on('close', () => AppCloseHandler(ws))
+                    ws.on('message', (msg) => {AppMessageHandler(ws,msg)})
                 }
             }
         }
-        else if (message.hasOwnProperty("agent")) {
-            NodeMessageHandler(ws, message["agent"])
-        }
-        else if (message.hasOwnProperty("app")) {
-            AppMessageHandler(ws, message["app"])
-        }
-    });
+        else{ 
+
+        }  
+    } 
+    );
 }
 
 
