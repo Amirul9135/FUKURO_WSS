@@ -9,6 +9,8 @@ const jwt = require("jsonwebtoken");
 const jwtsCache = new ServerCache('data/jwts')
 const Auth = require("../Middleware/Authenticate")
 
+//mounted to /api/user
+
 router.post("/", [
     Validator.checkString("name", "name is required"),
     Validator.checkString("username", "user name is required"),
@@ -63,7 +65,8 @@ router.post('/login',
                     secret = crypto.randomBytes(32).toString('hex');
                     global.jwts[result.userId] = secret;
                 }
-                jwtsCache.mcache.setItem(String(result.userId), secret)
+                console.log(secret)
+                jwtsCache.mcache.setItem(String(result.userId), secret) 
                 var payload = {
                     user: {
                         id: result.userId,
@@ -120,4 +123,25 @@ router.get("/", Auth.verifyJWT(), function (req, res) {
         return res.status(500).send({ message: err.message })
     })
 })
+
+router.get("/verify",[ (req,res,next)=>{
+    console.log(req.header["Authorization"])
+    next()
+},Auth.verifyJWT()],function(req,res){
+    console.log('verify')
+    return res.status(200).send();
+})
+
+router.get("/logout",[
+    Auth.verifyJWT()
+], async  function(req,res){
+   
+    //remove the dyamic jwt secret of this user
+    //all existing token will be invalid
+    console.log("logout")
+    await jwtsCache.mcache.removeItem(String(req.user.id)); 
+
+    return res.status(200).send();
+}
+)
 module.exports = router;
