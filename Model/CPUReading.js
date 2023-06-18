@@ -3,9 +3,9 @@ const db = require("../Controller/DBConn")
 
 module.exports = class CPUReading {
 
-    static minute = 0;
-    static hour = 1;
-    static day = 2;
+    static minute = 0; //past  1 hour with 10 sec interval
+    static hour = 1; //past 24 hour interval of 5 minute
+    static day = 2; //past 1 week interval of 30 minute
 
     //time stamp yyyy-MM-dd hh-mm-ss
 
@@ -41,16 +41,16 @@ module.exports = class CPUReading {
     static getReadings(userId,nodeId,period=2){
         //period is int based on the static attribute
 
-        var strSql = "SELECT AVG(c.user) as user, AVG(c.interrupt) as interrupt, AVG(c.system) as system, "
+        var strSql = "SELECT c.label, AVG(c.user) as user, AVG(c.interrupt) as interrupt, AVG(c.system) as system, "
 
         if(period == CPUReading.minute){
-           strSql += " TIMESTAMP(c.dateTime) - INTERVAL SECOND(c.dateTime) % 15 SECOND AS interval_group "
+           strSql += " TIMESTAMP(c.dateTime) - INTERVAL SECOND(c.dateTime) % 10 SECOND AS interval_group "
         }
         if(period == CPUReading.hour){
-            strSql += " TIMESTAMP(c.dateTime) - INTERVAL SECOND(c.dateTime) % 60 SECOND AS interval_group "
+            strSql += " TIMESTAMP(c.dateTime) - INTERVAL MINUTE(c.dateTime) % 5 MINUTE AS interval_group "
         }
         if(period == CPUReading.day){
-            strSql += " TIMESTAMP(c.dateTime) - INTERVAL SECOND(c.dateTime) % 360 SECOND AS interval_group "
+            strSql += " TIMESTAMP(c.dateTime) - INTERVAL MINUTE(c.dateTime) % 30 MINUTE AS interval_group "
         }
 
 
@@ -68,7 +68,7 @@ module.exports = class CPUReading {
             strSql += " AND  c.dateTime >= DATE_SUB(NOW(), INTERVAL 7 DAY)"
         }
         
-        strSql+= " GROUP BY interval_group  ORDER BY `interval_group` ASC"
+        strSql+= " GROUP BY  c.label, interval_group  ORDER BY `interval_group` ASC"
 
         console.log(strSql)
         return new Promise(function (resolve,reject){

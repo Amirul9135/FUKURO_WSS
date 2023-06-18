@@ -31,6 +31,33 @@ router.get("/access",[
     })
 }
 )
+router.post("/access",[ 
+    (req,res,next)=> {
+        console.log(req)
+        console.log(req.body)
+        next()
+    },
+    Auth.verifyJWT(),
+    Validator.checkNumber("nodeId",{min:1}),
+    Validator.checkString("passKey"),
+    Validator.validate()
+], function(req,res){
+    console.log("here")
+    Node_.findNode(req.body.nodeId, req.user.id).then(async function(result){
+        
+        var isMatch = await bcrypt.compare(req.body.passKey, result.passKey)
+        result.passKey = null
+        if(isMatch)
+            return res.status(200).send(result)
+        else
+            return res.status(401).send({message:"no access"})
+
+    }).catch(function(err){
+        console.log(err)
+        return res.status(500).send({message:err.message})
+    })
+}
+)
 
 router.post("/", [
     Auth.verifyJWT(),
@@ -98,12 +125,12 @@ function(req,res){
     //must have path variable which is the nodeId
     if(!req.params.nodeId){
         return res.status(400).send({message: "invalid request"});
-    }
+    } 
     var nodeId = parseInt(req.params.nodeId);
     if(isNaN(nodeId)){
         return res.status(400).send({message: "invalid request"})
     }
-    CPUReading.getReadings(req.user.id,nodeId).then(function(result){
+    CPUReading.getReadings(req.user.id,nodeId,req.query.p).then(function(result){
         console.log(result.length)
         return res.status(200).send(result)
     }).catch(function(err){
