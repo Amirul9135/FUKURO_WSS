@@ -6,6 +6,7 @@ const crypto = require("crypto")
 const Auth = require("../Middleware/Authenticate")
 const Node_ = require("../../Model/Node_")
 const NodeDir = require("../../Model/NodeDir")
+const CPUReading = require('../../Model/CPUReading')
 
 
 router.get("/access",[ 
@@ -89,5 +90,28 @@ router.get("/:nodeId",
 
     })
 
+/*metrics api*/
+router.get("/cpu/:nodeId",[
+    Auth.verifyJWT()
+],
+function(req,res){
+    //must have path variable which is the nodeId
+    if(!req.params.nodeId){
+        return res.status(400).send({message: "invalid request"});
+    }
+    var nodeId = parseInt(req.params.nodeId);
+    if(isNaN(nodeId)){
+        return res.status(400).send({message: "invalid request"})
+    }
+    CPUReading.getReadings(req.user.id,nodeId).then(function(result){
+        console.log(result.length)
+        return res.status(200).send(result)
+    }).catch(function(err){
+        return res.status(400).send({message: err.message})
+    })
+
+
+
+})
 
 module.exports = router
