@@ -43,11 +43,12 @@ message that doesn't comply will be ignored
 
 
 module.exports = async function (ws, req, a) {
-    ws.on('message', async function (message) {
+    ws.on('message', async function (message) { 
         console.log("con")
         try {
             message = JSON.parse(message)
         } catch (e) {
+            console.log("rejected: " + message)
             refuseConnection(ws, "invalid message content")
             return
         }
@@ -130,8 +131,10 @@ module.exports = async function (ws, req, a) {
                         message.metric = {}
                     WsClients.addAppClient(nodeDetail.nodeId, user, ws, message.metric)
                     //notify node to switch to realtime
+                    console.log('app client connected')
                     ws.on('close', () => AppCloseHandler(ws))
                     ws.on('message', (msg) => {AppMessageHandler(ws,msg)})
+                    ws.send(JSON.stringify({message:"connected as app client"}))
                 }
             }
         }

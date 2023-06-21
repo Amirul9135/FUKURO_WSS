@@ -31,12 +31,9 @@ router.get("/access",[
     })
 }
 )
-router.post("/access",[ 
-    (req,res,next)=> {
-        console.log(req)
-        console.log(req.body)
-        next()
-    },
+
+//redundant since flutter mobile cant send body in get
+router.post("/access",[  
     Auth.verifyJWT(),
     Validator.checkNumber("nodeId",{min:1}),
     Validator.checkString("passKey"),
