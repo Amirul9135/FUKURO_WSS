@@ -30,7 +30,9 @@ class WsClients {
             }
             this.list[nodeId].client.app.push(ws) 
             ws.send(JSON.stringify({ info: "Connected to node: " + this.list[nodeId].client.data.name }))
-            this.list[nodeId].send("live interval")
+            if(metric.hasOwnProperty("cpu") && metric.cpu){
+                this.list[nodeId].send("RT_CPU")
+            }
         }
     }
 
@@ -41,7 +43,7 @@ class WsClients {
             console.log(ws.client.data)
             console.log(this.list[ws.client.nodeId].client.app.length)
             if(this.list[ws.client.nodeId].client.app.length == 0){//empty no 1 watching
-                this.list[ws.client.nodeId].send("norm interval")
+                this.list[ws.client.nodeId].send("NOCLIENT")
             }
         }
     }
@@ -52,6 +54,12 @@ class WsClients {
                 apws.send(JSON.stringify({"warning":"node offline"}))
             });
             delete this.list[ws.client.data.nodeId]
+        }
+    }
+
+    testBroadcast(){
+        for(let e in this.list){
+            this.list[e].send('broadcast');
         }
     }
 }

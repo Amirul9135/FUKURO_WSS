@@ -39,6 +39,22 @@ module.exports = class Node_ {
         })
     }
 
+    static fetchConfigs(nodeId){
+        var strSql = "SELECT * FROM node_config WHERE nodeId= " + db.escape(nodeId)
+        console.log(strSql)
+
+        return new Promise(function(resolve,reject){
+            db.query(strSql,function(err,result){
+                if(err){
+                    return reject(err)
+                }
+                else{
+                    return resolve(result)
+                }
+            })
+        })
+    }
+
     static findNode(nodeId, userId) {
         var strSQL = "SELECT n.nodeId,n.name,n.description,n.ipAddress,n.passKey FROM node n JOIN node_dir d ON n.nodeId=d.nodeId JOIN node_dir_access a ON a.pathId=d.pathId"
             + " WHERE n.nodeId=" + db.escape(nodeId) + " AND a.userId=" + db.escape(userId)
