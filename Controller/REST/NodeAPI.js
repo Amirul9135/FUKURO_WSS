@@ -116,6 +116,33 @@ router.post(
   }
 );
 
+router.put(
+  "/",
+  [
+    Auth.verifyJWT(),
+    Validator.checkNumber("nodeId",{min:1}),
+    Validator.checkString("name"),
+    Validator.checkString("description"),
+    Validator.checkString("ipAddress"),
+    Validator.checkString("passKey"),
+    Validator.validate(),
+  ],
+  async function registerNode (req, res) {
+    var newNode = new Node_(req.body);
+    var error;
+    newNode.setPassKey(
+      await bcrypt.hash(newNode.getPassKey(), await bcrypt.genSalt(10))
+    );
+    newNode.update().then(function(result){
+      return res.status(200).send()
+    }).catch(function (err) {
+      return res.status(500).send({ message: err.message });
+    });
+    
+  }
+);
+
+
 router.get("/", Auth.verifyJWT(), function fetchAccessibleNodes (req, res) {
   Node_.findUserAccessibleNodes(req.user.id)
     .then(function (result) {
