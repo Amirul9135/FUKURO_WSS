@@ -1,5 +1,5 @@
 
-const WsClients = require("../../../Model/WsClient");
+const WsClients = require("../WsClient");
 module.exports = function onClose(ws) {
 
     //query db, notify node down 

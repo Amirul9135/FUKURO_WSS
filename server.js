@@ -6,6 +6,7 @@ app.use(express.json({ extended: false }));
 
 app.use("/api/node", require("./Controller/REST/NodeAPI"))
 app.use("/api/user", require("./Controller/REST/UserAPI"))
+app.use("/api/config", require("./Controller/REST/ConfigAPI"))
 app.use("/test", require("./Controller/REST/TestAPI"))
 
 app.get("/api/test", (req, res) => {

@@ -1,4 +1,7 @@
 const CPU = require("../../../Model/CPUReading")
+const Node_ = require("../../../Model/Node_");
+const FUKURO = require("../../../Model/FUKURO")
+const oneSignal = require("../../OneSignal")
 
 /*
 This module handle the operation of recieving and process message from node client
@@ -52,10 +55,39 @@ module.exports = function onMessage(ws, message) {
                 });
             }
         }
+        else if(message.hasOwnProperty("alert")){
+            handleAlert(ws.client.data.nodeId, message.alert);
+        }
     }catch(e){
         console.log("bad message")
     }
     
 
     console.log("node message " + message)
+}
+
+function handleAlert(nodeId,signal){
+  //  {
+   //     "type":"cpu",
+    //    "reading":{dateTime,system, user,interrupt}
+   // }
+    console.log(nodeId)
+    console.log(signal)
+    userlist = Node_.findUserToNotify(nodeId,FUKURO.CPU.ResourceId).then(function(result){
+        //[{userId: 1 },{userId: 1 }]
+        userIds = []
+        result.forEach(user=>{
+            console.log(user.userId) 
+            userIds.push(user.userId.toString())
+
+        })
+        console.log(userIds)
+        if(userIds.length >0){
+            var total = signal.reading.system + signal.reading.user + signal.reading.interrupt 
+            oneSignal.sendNotification(userIds,"CPU utilization reaches:"+total+" % on "+ signal.reading.dateTime );
+        }
+        console.log(result)
+    }).catch(function(err){
+        console.log(err.mesage)
+    })
 }

@@ -19,7 +19,8 @@ router.post("/", [
     Validator.checkString("phone", { min: 10, max: 11 }),
     Validator.checkString("pin", { min: 6, max: 6 }),
     Validator.validate()
-], async function (req, res) {
+
+], async function registerUser  (req, res) {
     var reguser = new User(req.body)
     var salt = await bcrypt.genSalt(10)
     var hashed = await bcrypt.hash(reguser.getPassword(), salt)
@@ -50,7 +51,7 @@ router.post('/login',
         Validator.checkString("password", { min: 6 }, "password must be at least 6 character"),
         Validator.validate()
     ]
-    , function (req, res) {
+    , function login (req, res) {
         var loginUser = new User(req.body)
         loginUser.login().then(async function (result) {
             var isMatch = await bcrypt.compare(loginUser.getPassword(), result.password)
@@ -101,7 +102,7 @@ router.put("/", [
     Validator.checkString("email", "email required"),
     Validator.checkString("phone", { min: 10, max: 11 }),
     Validator.validate()
-], async function (req, res) {
+], async function updateUser (req, res) {
     var reguser = new User(req.body)
     reguser.setUserId(req.user.id)
     reguser.update().then(function (value) {
@@ -116,7 +117,8 @@ router.put("/", [
     })
 })
 
-router.get("/", Auth.verifyJWT(), function (req, res) {
+router.get("/", Auth.verifyJWT(), 
+function getUser(req, res) {
     User.findByUserId(req.user.id).then(function (result) {
         return res.status(200).send(result)
     }).catch(function (err) {
@@ -126,6 +128,7 @@ router.get("/", Auth.verifyJWT(), function (req, res) {
 
 router.get("/verify",[ (req,res,next)=>{
     console.log(req.header["Authorization"])
+    console.log('verify')
     next()
 },Auth.verifyJWT()],function(req,res){
     console.log('verify')

@@ -6,7 +6,7 @@ const NodeMessageHandler = require("./Node/NodeOnMessage")
 const AppMessageHandler = require("./App/AppOnMessage")
 const NodeCloseHandler = require("./Node/NodeOnClose")
 const AppCloseHandler = require("./App/AppOnClose")
-const WsClients = require("../../Model/WsClient");
+const WsClients = require("./WsClient");
 
 
 /*
@@ -43,7 +43,7 @@ message that doesn't comply will be ignored
 
 
 module.exports = async function (ws, req, a) {
-    ws.on('message', async function (message) { 
+    ws.on('message', async function verifyClient(message) { 
         console.log("con")
         try {
             message = JSON.parse(message)

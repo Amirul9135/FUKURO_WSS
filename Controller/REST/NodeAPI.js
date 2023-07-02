@@ -7,9 +7,7 @@ const Auth = require("../Middleware/Authenticate");
 const Node_ = require("../../Model/Node_");
 const NodeDir = require("../../Model/NodeDir");
 const CPUReading = require("../../Model/CPUReading");
-
-
-const WsClients = require("../../Model/WsClient");
+ 
 
 router.get(
   "/access",
@@ -19,7 +17,7 @@ router.get(
     Validator.checkString("passKey"),
     Validator.validate(),
   ],
-  function (req, res) {
+  function verifyAccess(req, res) {
     console.log("here");
     Node_.findNode(req.body.nodeId, req.user.id)
       .then(async function (result) {
@@ -70,7 +68,7 @@ router.post(
     Validator.checkString("passKey"),
     Validator.validate(),
   ],
-  async function (req, res) {
+  async function registerNode (req, res) {
     var newNode = new Node_(req.body);
     var error;
     newNode.setPassKey(
@@ -118,7 +116,7 @@ router.post(
   }
 );
 
-router.get("/", Auth.verifyJWT(), function (req, res) {
+router.get("/", Auth.verifyJWT(), function fetchAccessibleNodes (req, res) {
   Node_.findUserAccessibleNodes(req.user.id)
     .then(function (result) {
       return res.status(200).send(result);
@@ -128,7 +126,7 @@ router.get("/", Auth.verifyJWT(), function (req, res) {
     });
 });
 
-router.get("/:nodeId", Auth.verifyJWT(), function (req, res) {
+router.get("/:nodeId", Auth.verifyJWT(), function nodeDetails(req, res) {
   Node_.findNode(req.params.nodeId, req.user.id)
     .then(function (result) {
       result.passKey = null;
@@ -139,7 +137,7 @@ router.get("/:nodeId", Auth.verifyJWT(), function (req, res) {
     });
 });
 
-router.get("/config/:nodeId", function (req, res) {
+router.get("/config/:nodeId", function getNodeConfigs(req, res) {
   console.log("s");
   WsClients.testBroadcast()
   if (!req.params.nodeId) {
@@ -157,7 +155,7 @@ router.get("/config/:nodeId", function (req, res) {
 // @Path variable integer of the node id
 // @Query dur= duration in second
 // @Query int= interval in second
-router.get("/cpu/:nodeId", [Auth.verifyJWT()], function (req, res) {
+router.get("/cpu/:nodeId", [Auth.verifyJWT()], function historicalCPUUsage (req, res) {
   //must have path variable which is the nodeId
   if (!req.params.nodeId) {
     return res.status(400).send({ message: "invalid request" });

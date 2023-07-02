@@ -92,6 +92,21 @@ module.exports = class Node_ {
         })
     }
 
+    static findUserToNotify(userId,resourceType){
+        var strSql = "SELECT userId FROM user_notification WHERE nodeId="+db.escape(userId)+" AND resourceType="+db.escape(resourceType)
+        return new Promise(function(resolve,reject){
+            db.query(strSql, function(err,result){
+                if(err){
+                    return reject(err)
+                }
+                else{
+                    result = JSON.parse(JSON.stringify(result))
+                    return resolve(result)
+                }
+            })
+        })
+    }
+
     constructor(jObj = null) {
         if (jObj != null) {
             if (jObj.hasOwnProperty("nodeId")) {
