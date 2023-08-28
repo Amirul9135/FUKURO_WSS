@@ -1,220 +1,143 @@
-const express = require("express");
-const router = express.Router();
-const Validator = require("../Middleware/Validator");
-const bcrypt = require("bcryptjs");
-const crypto = require("crypto");
-const Auth = require("../Middleware/Authenticate");
+//this class handles the request to manage resource related to node data
+const RESTController = require("./RESTController") // rest controller base class
+const NodeDir = require("../../Model/NodeDir")
 const Node_ = require("../../Model/Node_");
-const NodeDir = require("../../Model/NodeDir");
-const CPUReading = require("../../Model/CPUReading");
- 
+const bcrypt = require("bcryptjs");
 
-router.get(
-  "/access",
-  [
-    Auth.verifyJWT(),
-    Validator.checkNumber("nodeId", { min: 1 }),
-    Validator.checkString("passKey"),
-    Validator.validate(),
-  ],
-  function verifyAccess(req, res) {
-    console.log("here");
-    Node_.findNode(req.body.nodeId, req.user.id)
-      .then(async function (result) {
-        var isMatch = await bcrypt.compare(req.body.passKey, result.passKey);
-        result.passKey = null;
-        if (isMatch) return res.status(200).send(result);
-        else return res.status(401).send({ message: "no access" });
-      })
-      .catch(function (err) {
-        console.log(err);
-        return res.status(500).send({ message: err.message });
-      });
+class NodeAPI extends RESTController {
+  constructor() {
+    super()
+
+    //bind path
+    this._router.post("/access", this.#verifyAccess())
+    this._router.post("/", this.#registerNode())
+    this._router.get("/", this.#fetchAccessibleNodes())
+    this._router.get("/:nodeId",this.#nodeDetails())
+    this._router.put("/",this.#updateNode())
   }
-);
-
-//redundant since flutter mobile cant send body in get
-router.post(
-  "/access",
-  [
-    Auth.verifyJWT(),
-    Validator.checkNumber("nodeId", { min: 1 }),
-    Validator.checkString("passKey"),
-    Validator.validate(),
-  ],
-  function (req, res) {
-    console.log("here");
-    Node_.findNode(req.body.nodeId, req.user.id)
-      .then(async function (result) {
-        var isMatch = await bcrypt.compare(req.body.passKey, result.passKey);
-        result.passKey = null;
-        if (isMatch) return res.status(200).send(result);
-        else return res.status(401).send({ message: "no access" });
-      })
-      .catch(function (err) {
-        console.log(err);
-        return res.status(500).send({ message: err.message });
-      });
-  }
-);
-
-router.post(
-  "/",
-  [
-    Auth.verifyJWT(),
-    Validator.checkString("name"),
-    Validator.checkString("description"),
-    Validator.checkString("ipAddress"),
-    Validator.checkString("passKey"),
-    Validator.validate(),
-  ],
-  async function registerNode (req, res) {
-    var newNode = new Node_(req.body);
-    var error;
-    newNode.setPassKey(
-      await bcrypt.hash(newNode.getPassKey(), await bcrypt.genSalt(10))
-    );
-    newNode.setNodeId(
-      await newNode.register().catch(function (err) {
-        error = err;
-      })
-    );
-    if (!newNode.getNodeId())
-      return res
-        .status(500)
-        .send({ message: "failed to register node", details: error });
-
-    var newDir = new NodeDir({
-      nodeId: newNode.getNodeId(),
-      path: "/",
-      label: "root",
-    });
-    newDir.setPathId(
-      await newDir.register().catch(function (err) {
-        error = err;
-      })
-    );
-    if (!newDir.getPathId())
-      return res
-        .status(500)
-        .send({
-          message: "failed to register node default root directory",
-          details: error,
-        });
-
-    NodeDir.grantAccess(newDir.getPathId(), req.user.id)
-      .then(function (result) {
-        return res.status(200).send({ message: "registered" });
-      })
-      .catch(function (err) {
-        return res
-          .status(500)
-          .send({
-            message: "failed to grant user access to default directory root",
+  #verifyAccess() {
+    return [
+      this._auth.authRequest(),
+      this._validator.checkNumber("nodeId", { min: 1 }),
+      this._validator.checkString("passKey"),
+      this._validator.validate(),
+      (req, res) => {
+        console.log("here");
+        Node_.findNode(req.body.nodeId, req.user.id)
+          .then(async function (result) {
+            var isMatch = (result) ? await bcrypt.compare(req.body.passKey, result.passKey) : false
+            result.passKey = null;
+            if (isMatch) return res.status(200).send(result);
+            else return res.status(401).send({ message: "no access" });
+          })
+          .catch(function (err) {
+            console.log(err);
+            return res.status(500).send({ message: err.message });
           });
-      });
+      }
+    ]
   }
-);
+  #registerNode() {
+    return [
+      this._auth.authRequest(),
+      this._validator.checkString("name"),
+      this._validator.checkString("description"),
+      this._validator.checkString("passKey"),
+      this._validator.validate(),
+      async (req, res) => {
+        var newNode = new Node_(req.body);
+        var error;
+        newNode.passKey = await bcrypt.hash(newNode.passKey, await bcrypt.genSalt(10))
+        await newNode.register()
+        if (!newNode.nodeId)
+          return res
+            .status(500)
+            .send({ message: "failed to register node" });
 
-router.put(
-  "/",
-  [
-    Auth.verifyJWT(),
-    Validator.checkNumber("nodeId",{min:1}),
-    Validator.checkString("name"),
-    Validator.checkString("description"),
-    Validator.checkString("ipAddress"),
-    Validator.checkString("passKey"),
-    Validator.validate(),
-  ],
-  async function registerNode (req, res) {
-    var newNode = new Node_(req.body);
-    var error;
-    newNode.setPassKey(
-      await bcrypt.hash(newNode.getPassKey(), await bcrypt.genSalt(10))
-    );
-    newNode.update().then(function(result){
-      return res.status(200).send()
-    }).catch(function (err) {
-      return res.status(500).send({ message: err.message });
-    });
-    
-  }
-);
+        var newDir = new NodeDir({
+          nodeId: newNode.nodeId,
+          path: "/",
+          label: "root",
+        });
+        await newDir.register()
+        console.log('after reg', newDir)
+        if (!newDir.pathId)
+          return res
+            .status(500)
+            .send({
+              message: "failed to register node default root directory"
+            });
 
+        NodeDir.grantAccess(newDir.pathId, req.user.id)
+          .then(function (result) {
+            return res.status(200).send({ message: "registered" });
+          })
+          .catch(function (err) {
+            return res
+              .status(500)
+              .send({
+                message: "failed to grant user access to default directory root",
+              });
+          });
+      }
+    ]
+  }
+  #fetchAccessibleNodes() {
+    return [
+      this._auth.authRequest(),
+      (req, res) => {
 
-router.get("/", Auth.verifyJWT(), function fetchAccessibleNodes (req, res) {
-  Node_.findUserAccessibleNodes(req.user.id)
-    .then(function (result) {
-      return res.status(200).send(result);
-    })
-    .catch(function (err) {
-      return res.status(500).send({ message: err.message });
-    });
-});
+        Node_.findUserAccessibleNodes(req.user.id)
+          .then(function (result) {
+            return res.status(200).send(result);
+          })
+          .catch(function (err) {
+            return res.status(500).send({ message: err.message });
+          });
+      }
+    ]
+  }
+  #nodeDetails() {
+    return [
+      this._auth.authRequest(),
+      (req, res) => {
+        Node_.findNode(req.params.nodeId, req.user.id)
+          .then(function (result) {
+            result.passKey = null;
+            return res.status(200).send(result);
+          })
+          .catch(function (err) {
+            return res.status(500).send({ message: err.message });
+          })
+      }
+    ]
+  }
+  #updateNode() {
+    return [
+      this._auth.authRequest(),
+      this._validator.checkNumber("nodeId",{min:1}),
+      this._validator.checkString("name"),
+      this._validator.checkString("description"), 
+      this._validator.validate(),
+      async   (req, res) => {
+        var newNode = new Node_(req.body);  
+        newNode.update(req.user.id).then(function(result){
+          if(result>0){
+            return res.status(200).send()
 
-router.get("/:nodeId", Auth.verifyJWT(), function nodeDetails(req, res) {
-  Node_.findNode(req.params.nodeId, req.user.id)
-    .then(function (result) {
-      result.passKey = null;
-      return res.status(200).send(result);
-    })
-    .catch(function (err) {
-      return res.status(500).send({ message: err.message });
-    });
-});
+          }
+          else{
+            
+            return res.status(400).send({ message: "no change, make sure you have access and authority to update the node" })
+          }
+        }).catch(function (err) {
+          return res.status(500).send({ message: err.message });
+        });
+        
+      }
 
-router.get("/config/:nodeId", function getNodeConfigs(req, res) {
-  console.log("s");
-  WsClients.testBroadcast()
-  if (!req.params.nodeId) {
-    return res.status(400).send();
+    ]
   }
-  Node_.fetchConfigs(req.params.nodeId)
-    .then(function (result) {
-      return res.status(200).send(result);
-    })
-    .catch(function (err) {
-      return res.status(500).send({ message: err.message });
-    });
-});
-/*metrics api*/
-// @Path variable integer of the node id
-// @Query dur= duration in second
-// @Query int= interval in second
-router.get("/cpu/:nodeId", [Auth.verifyJWT()], function historicalCPUUsage (req, res) {
-  //must have path variable which is the nodeId
-  if (!req.params.nodeId) {
-    return res.status(400).send({ message: "invalid request" });
-  }
-  var nodeId = parseInt(req.params.nodeId);
-  if (isNaN(nodeId)) {
-    return res.status(400).send({ message: "invalid request" });
-  }
-  console.log(req.query);
-  var duration = 3600;
-  var interval = 15;
-  if (req.query.dur) {
-    duration = parseInt(req.query.dur);
-  }
-  if (req.query.int) {
-    interval = parseInt(req.query.int);
-  }
-  var date = null;
-  if (req.query.date) {
-    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(req.query.date)) {
-      // if valid yyyy-mm-dd hh:mm format
-      date = req.query.date;
-    }
-  }
+}
 
-  CPUReading.fetchHistorical(nodeId, interval, duration, date)
-    .then(function (result) {
-      return res.status(200).send(result);
-    })
-    .catch(function (err) {
-      return res.status(400).send({ message: err.message });
-    });
-});
-
-module.exports = router;
+module.exports = NodeAPI;

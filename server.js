@@ -1,13 +1,16 @@
 const express = require('express');
 const path = require('path');
 const app = express();
+const UserAPI = require("./Controller/REST/UserAPI")
+const NodeAPI = require("./Controller/REST/NodeAPI")
+const ConfigAPI = require("./Controller/REST/ConfigAPI")
 
 app.use(express.json({ extended: false }));
 
-app.use("/api/node", require("./Controller/REST/NodeAPI"))
-app.use("/api/user", require("./Controller/REST/UserAPI"))
-app.use("/api/config", require("./Controller/REST/ConfigAPI"))
-app.use("/test", require("./Controller/REST/TestAPI"))
+app.use("/api/node", new NodeAPI().routes())
+app.use("/api/user", new UserAPI().routes())
+app.use("/api/config", new ConfigAPI().routes())
+//app.use("/test", require("./Controller/REST/TestAPI"))
 
 app.get("/api/test", (req, res) => {
     return res.send(new Date().toDateString())

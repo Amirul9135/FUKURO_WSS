@@ -1,150 +1,161 @@
-const express = require('express')
-const User = require("../../Model/User")
-const router = express.Router()
-const Validator = require("../Middleware/Validator")
-const bcrypt = require("bcryptjs")
-const ServerCache = require("../../server_cache")
-const crypto = require("crypto")
-const jwt = require("jsonwebtoken");
-const jwtsCache = new ServerCache('data/jwts')
-const Auth = require("../Middleware/Authenticate")
+//this class handles the request to manage resource related to user data
+const RESTController = require("./RESTController") // rest controller base class
+const User = require("../../Model/User") // user entity model
+const bcrypt = require("bcryptjs") // password encryption 
+const crypto = require("crypto") // generate random number for dynamic jwt secret
+const jwt = require("jsonwebtoken"); //jwt signing
 
-//mounted to /api/user
+class UserAPI extends RESTController {
 
-router.post("/", [
-    Validator.checkString("name", "name is required"),
-    Validator.checkString("username", "user name is required"),
-    Validator.checkString("email", "email required"),
-    Validator.checkString("password", { min: 6 }),
-    Validator.checkString("phone", { min: 10, max: 11 }),
-    Validator.checkString("pin", { min: 6, max: 6 }),
-    Validator.validate()
+    constructor() {
+        super()
 
-], async function registerUser  (req, res) {
-    var reguser = new User(req.body)
-    var salt = await bcrypt.genSalt(10)
-    var hashed = await bcrypt.hash(reguser.getPassword(), salt)
-    salt = await bcrypt.genSalt(10)
-    var hashedPin = await bcrypt.hash(reguser.getPin(), salt)
+        //bind routes to handler in class method
+        this._router.post("/", this.#registerUser())
+        this._router.post("/login", this.#login())
+        this._router.put("/",this.#updateUser())
+        this._router.get("/",this.#getUser())
+        this._router.get("/logout",this.#logout())
+    }
 
-    reguser.setPassword(hashed)
-    reguser.setPin(hashedPin)
-    reguser.register().then(function (value) {
-        return res.status(200).send({ message: "registered" })
-    }).catch(function (err) {
-        if (err.errno == 1062) {
-            return res.status(409).send({ message: "Username already in use" })
-        }
-        else {
-            return res.status(500).send({ message: err.message })
-        }
-    })
-})
+    #registerUser() {
+        return [
+            this._validator.checkString("name", "name is required"),
+            this._validator.checkString("username",{ min: 6 }, "username must be at least 6 character"),
+            this._validator.checkString("email", "email required"),
+            this._validator.checkString("password", { min: 6 }, "password must be at least 6 character"),
+            this._validator.checkString("phone", { min: 10, max: 11 }),
+            this._validator.checkString("pin", { min: 6, max: 6 }),
+            this._validator.validate(),
+            async function (req, res) {
+                var reguser = new User(req.body)
+                var salt = await bcrypt.genSalt(10)
+                var hashed = await bcrypt.hash(reguser.password, salt)
+                salt = await bcrypt.genSalt(10)
+                var hashedPin = await bcrypt.hash(reguser.pin, salt)
 
-
-router.post('/login',
-    [
-        function(req,res,next){
-            console.log(req.body)
-        next()},
-        Validator.checkString("username", { min: 6 }, "username must be at least 6 character"),
-        Validator.checkString("password", { min: 6 }, "password must be at least 6 character"),
-        Validator.validate()
-    ]
-    , function login (req, res) {
-        var loginUser = new User(req.body)
-        loginUser.login().then(async function (result) {
-            var isMatch = await bcrypt.compare(loginUser.getPassword(), result.password)
-            if (isMatch) {
-                if (!global.jwts)//if no jwts yet initialize
-                    global.jwts = {};
-                var secret = ""
-                if (global.jwts && global.jwts.hasOwnProperty(result.userId)) {
-                    secret = global.jwts[result.userId] 
-                }
-                else{
-                    secret = crypto.randomBytes(32).toString('hex');
-                    global.jwts[result.userId] = secret;
-                }
-                console.log(secret)
-                jwtsCache.mcache.setItem(String(result.userId), secret) 
-                var payload = {
-                    user: {
-                        id: result.userId,
-                        name: result.name,
-                        username: result.username
+                reguser.password = hashed
+                reguser.pin = hashedPin
+                reguser.register().then(function (value) {
+                    return res.status(200).send({ message: "registered" })
+                }).catch(function (err) {
+                    if (err.errno == 1062) {
+                        return res.status(409).send({ message: "Username already in use" })
                     }
-                }
-                jwt.sign(payload,
-                    global.jwts[result.userId],
-                    (err, token) => {
-                        if (err) throw err
-                        var fragment = token.toString().split('.');
-                        return res.send({ token: fragment[1] + "." + fragment[2], uid: result.userId });
+                    else {
+                        return res.status(500).send({ message: err.message })
                     }
-                );
+                })
+            }
+        ]
+    }
+
+    #login() {
+        // bind the logout handler to an instance to be passed into request handler 
+        return [
+            this._validator.checkString("username", { min: 6 }, "username must be at least 6 character"),
+            this._validator.checkString("password", { min: 6 }, "password must be at least 6 character"),
+            this._validator.validate(),
+            async (req, res)=> {
+                var loginUser = new User(req.body)
+                loginUser.login().then(async  (result)=> {
+                    var isMatch = await bcrypt.compare(loginUser.password, result.password)
+                    if (isMatch) {
+                        if (!global.jwts)//if no jwts yet initialize
+                            global.jwts = {};
+                        var secret = ""
+                        if (global.jwts && global.jwts.hasOwnProperty(result.userId)) {
+                            secret = global.jwts[result.userId]
+                        }
+                        else {
+                            secret = crypto.randomBytes(32).toString('hex');
+                            global.jwts[result.userId] = secret;
+                        } 
+                        await this._auth.logUser (result.userId,secret)
+                        console.log('after')
+                     //   jwtsCache.mcache.setItem(String(result.userId), secret)
+                        var payload = {
+                            user: {
+                                id: result.userId,
+                                name: result.name,
+                                username: result.username
+                            }
+                        }
+                        jwt.sign(payload,
+                            global.jwts[result.userId],
+                            (err, token) => {
+                                if (err) throw err
+                                var fragment = token.toString().split('.');
+                                return res.send({ token: fragment[1] + "." + fragment[2], uid: result.userId });
+                            }
+                        );
+
+                    }
+                    else {
+                        return res.status(401).send({ message: "unauthorized" })
+                    }
+                }).catch(function (err) {
+                    return res.status(401).send({ message: "unauthorized" })
+                })
 
             }
-            else {
-                return res.status(401).send({ message: "unauthorized" })
+        ]
+    }
+    //update user except password
+    #updateUser() {
+        return [
+            this._auth.authRequest(),
+            this._validator.checkString("name", "name is required"),
+            this._validator.checkString("username",{ min: 6 }, "user name must be atleast 6 character"),
+            this._validator.checkString("email", "email required"),
+            this._validator.checkString("phone", { min: 10, max: 11 }),
+            this._validator.validate(),
+            async  (req, res)=> {
+                var reguser = new User(req.body)
+                reguser.userId = req.user.id
+                reguser.update().then(function (value) {
+                    return res.status(200).send({ message: "updated" })
+                }).catch(function (err) {
+                    if (err.errno == 1062) {
+                        return res.status(409).send({ message: "Username already in use" })
+                    }
+                    else {
+                        return res.status(500).send({ message: err.message })
+                    }
+                })
             }
-        }).catch(function (err) {
-            return res.status(401).send({ message: "unauthorized" })
-        })
 
-    })
+        ]
+    }
+    #getUser() {
+        return [
+            this._auth.authRequest(),
+            async (req, res)=> {
+                let user = new User({"userId":req.user.id})
+            
+                user.findByUserId().then(function (result) {
+                    return res.status(200).send(result)
+                }).catch(function (err) {
+                    return res.status(500).send({ message: err.message })
+                })
+            }
+        ]
+    }
 
+    #logout() { 
+        return [
+            this._auth.authRequest(),
+            async (req,res) =>{
 
-router.put("/", [
-    Auth.verifyJWT(),
-    Validator.checkString("name", "name is required"),
-    Validator.checkString("username", "user name is required"),
-    Validator.checkString("email", "email required"),
-    Validator.checkString("phone", { min: 10, max: 11 }),
-    Validator.validate()
-], async function updateUser (req, res) {
-    var reguser = new User(req.body)
-    reguser.setUserId(req.user.id)
-    reguser.update().then(function (value) {
-        return res.status(200).send({ message: "updated" })
-    }).catch(function (err) {
-        if (err.errno == 1062) {
-            return res.status(409).send({ message: "Username already in use" })
-        }
-        else {
-            return res.status(500).send({ message: err.message })
-        }
-    })
-})
-
-router.get("/", Auth.verifyJWT(), 
-function getUser(req, res) {
-    User.findByUserId(req.user.id).then(function (result) {
-        return res.status(200).send(result)
-    }).catch(function (err) {
-        return res.status(500).send({ message: err.message })
-    })
-})
-
-router.get("/verify",[ (req,res,next)=>{
-    console.log(req.header["Authorization"])
-    console.log('verify')
-    next()
-},Auth.verifyJWT()],function(req,res){
-    console.log('verify')
-    return res.status(200).send();
-})
-
-router.get("/logout",[
-    Auth.verifyJWT()
-], async  function(req,res){
-   
-    //remove the dyamic jwt secret of this user
-    //all existing token will be invalid
-    console.log("logout")
-    await jwtsCache.mcache.removeItem(String(req.user.id)); 
-
-    return res.status(200).send();
+                //remove the dyamic jwt secret of this user
+                //all existing token will be invalid
+                console.log("logout")
+                this._auth.logoutUser(req.user.id) 
+            
+                return res.status(200).send();
+            }
+        ]
+    }
 }
-)
-module.exports = router;
+
+module.exports = UserAPI

@@ -6,7 +6,7 @@
 // checkString untuk string, checkNumber untuk nombor
 // check secukup rasa, last middleware call nama.validate()
 
-class ValidateStr {
+class Validator {
     constructor() {
     }
 
@@ -119,10 +119,10 @@ class ValidateStr {
                 if (jsonObject[fieldName] != null) {
                     if (/^[0-9]+\.?[0-9]*$/.test(jsonObject[fieldName])) {
                         var valid = true;
-                        if (limit.min != null && jsonObject[fieldName] < limit.min) {
+                        if (limit != null && limit.min != null && jsonObject[fieldName] < limit.min) {
                             valid = false;
                         }
-                        if (limit.max != null && jsonObject[fieldName] > limit.max) {
+                        if (limit != null && limit.max != null && jsonObject[fieldName] > limit.max) {
                             valid = false;
                         }
                         if (!valid) {
@@ -171,4 +171,4 @@ class ValidateStr {
     }
 }
 
-module.exports = new ValidateStr();
+module.exports = Validator

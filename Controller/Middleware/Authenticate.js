@@ -1,6 +1,6 @@
 const config = require("config");
 const jwt = require("jsonwebtoken");
-
+//old auth
 class Authenticate {
 
     constructor() { }

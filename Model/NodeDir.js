@@ -1,111 +1,49 @@
-const db = require("../Controller/DBConn")
+
+const db = require("../Controller/Database")
 
 module.exports = class NodeDir {
-    #pathId
-    #nodeId
-    #path
-    #label
+    pathId
+    nodeId
+    path
+    label
 
-    register() {
-        var strSql = "INSERT INTO node_dir(nodeId,path,label) VALUES(" + db.escape(this.#nodeId)
-            + "," + db.escape(this.#path) + "," + db.escape(this.#label) + ")"
-        return new Promise(function (resolve, reject) {
-            db.query(strSql, function (err, result) {
-                if (err) {
-                    reject(err)
-                }
-                else {
-                    resolve(result.insertId)
-                }
-            })
-        })
+    async register() {
+        var strSql = "INSERT INTO node_dir(nodeId,path,label) VALUES(:nodeId:,:path:,:label:)"
+        let result = await db.queryParams(strSql,this) 
+        if(result)
+            this.pathId = result.insertId 
+        return result
     }
 
     update() {
-        var strSql = "UPDATE node_dir SET path=" + db.escape(this.#path) + ",label="
-            + db.escape(this.#label) + " WHERE pathId=" + db.escape(this.#pathId)
-
-        return new Promise(function (resolve, reject) {
-            db.query(strSql, function (err, result) {
-                if (err) {
-                    reject(err)
-                }
-                else {
-                    resolve({ affected: result.affectedRows })
-                }
-            })
-        })
+        var strSql = "UPDATE node_dir SET path=:path:, label=:label: WHERE pathId=:pathId:" 
+        return db.queryParams(strSql,this)
     }
 
     static grantAccess(pathId, userId) {
         var strSQL = "INSERT IGNORE INTO node_dir_access (userId,pathId) VALUES (" + db.escape(userId) + "," + db.escape(pathId) + ")"
-        return new Promise(function (resolve, reject) {
-            db.query(strSQL, function (err, result) {
-                if (err) {
-                    reject(err)
-                }
-                else {
-                    resolve()
-                }
-            })
-        })
+        return db.query(strSQL)
     }
 
     static removeAccess(pathId, userId) {
         var strSQL = "DELETE FROM node_dir_access WHERE userId=" + db.escape(userId) + " AND pathId=" + db.escape(pathId)
-        return new Promise(function (resolve, reject) {
-            db.query(strSQL, function (err, result) {
-                if (err) {
-                    reject(err)
-                }
-                else {
-                    resolve({ affected: result.affectedRows })
-                }
-            })
-        })
+        return db.query(strSQL)
     }
 
     constructor(jObj = null) {
         if (jObj != null) {
             if (jObj.hasOwnProperty("pathId")) {
-                this.#pathId = jObj["pathId"];
+                this.pathId = jObj["pathId"];
             }
             if (jObj.hasOwnProperty("nodeId")) {
-                this.#nodeId = jObj["nodeId"];
+                this.nodeId = jObj["nodeId"];
             }
             if (jObj.hasOwnProperty("path")) {
-                this.#path = jObj["path"];
+                this.path = jObj["path"];
             }
             if (jObj.hasOwnProperty("label")) {
-                this.#label = jObj["label"];
+                this.label = jObj["label"];
             }
         }
-    }
-    setPathId(pathId) {
-        this.#pathId = pathId
-    }
-    getPathId() {
-        return this.#pathId;
-    }
-
-    setNodeId(nodeId) {
-        this.#nodeId = nodeId
-    }
-    getNodeId() {
-        return this.#nodeId;
-    }
-
-    setPath(path) {
-        this.#path = path
-    }
-    getPath() {
-        return this.#path;
-    }
-
-    setLabel(label) {
-        this.#label = label
-    }
-    getLabel() {
-        return this.#label;
-    }
+    } 
 }
