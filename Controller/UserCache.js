@@ -34,7 +34,7 @@ class UserCache{
             parse: JSON.parse,
         });;   
         await this.#persistentCache.forEach(data => {  
-            console.log('cached user data',data)
+           // console.log('cached user data',data)
             this.#jwts[data.key] = data.value;
         }); 
     }

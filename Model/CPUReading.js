@@ -1,5 +1,5 @@
-const { resolve } = require("path");
-const db = require("../Controller/DBConn")
+ 
+const db = require("../Controller/Database")
 
 module.exports = class CPUReading {
 
@@ -16,6 +16,15 @@ module.exports = class CPUReading {
         user: 20.00,
         interrupt: 10.00 
     }*/
+    static save(nodeId,metrics){
+        let strSql = "INSERT INTO cpu_usage (dateTime,nodeId,system,user,interrupt) VALUES "
+        metrics.forEach(cpu => {
+            strSql += "(" + db.escape(cpu.dateTime) + "," + db.escape(nodeId) 
+                + "," + db.escape(cpu.system) + "," + db.escape(cpu.user) + "," + db.escape(cpu.interrupt) + "),"
+        });
+        strSql = strSql.substring(0, strSql.length - 1);
+        return db.query(strSql)
+    }
 
     static saveReadings(nodeId, metrics) {// cpu arr should contain array of cpu reading object 
         var strSql = "INSERT INTO cpu_usage (dateTime,nodeId,system,user,interrupt) VALUES "

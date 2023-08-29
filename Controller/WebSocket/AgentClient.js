@@ -1,7 +1,9 @@
 //this class is to store web socket client connecting from FUKURO agent application
 const WsClient = require("./WsClient")
-const {FUKURO_OS} = require("../OneSignal")
-
+const {FUKURO_OS} = require("../OneSignal") 
+const CPUReading = require("../../Model/CPUReading")
+const FUKURO = require("../../FUKURO")
+const AGENT = FUKURO.AGENT
 
 class AgentClient extends WsClient {
     #node //node object reference
@@ -33,6 +35,11 @@ class AgentClient extends WsClient {
         this._cache.removeApp(userId)
     } 
 
+    changeConfig(configId,value){
+        let msg = AGENT.config(configId,value)
+        this.send(JSON.stringify(msg))
+    }
+
     _onOpen(){
         console.log("Agent on " + this.#node.name +" connected")
         // logging information here
@@ -57,7 +64,16 @@ class AgentClient extends WsClient {
             console.log("received non json " + message)
             return
         }
-        console.log("(agent)received",message)
+      //  console.log("(agent)received",message)
+        if(!message.path){  
+            console.log('unknown instruction')
+        }   
+        if (message.path.startsWith("realtime")){ 
+            this.#broadcastReading(message)
+        }
+        else if(message.path.startsWith("reading")){
+            this.#saveReading(message.data)
+        }
 
     }
 
@@ -72,7 +88,10 @@ class AgentClient extends WsClient {
     }
 
     #saveReading(readings){
-
+        console.log("readings",readings)
+        if(readings['cpu']){
+            CPUReading.save(this.#node.nodeId ,readings['cpu'])
+        }
     }
 
     #broadcastReading(reading){

@@ -12,8 +12,7 @@ const WsClientCache = require("./WsClientCache")
 class ConnectionHandler {
  
     async onConnect(ws, req, a) { 
-        ws.on('message', async function parseMessage(message) {
-            console.log("con")
+        ws.on('message', async function parseMessage(message) { 
             try {
                 message = JSON.parse(message)
             } catch (e) {

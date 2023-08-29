@@ -8,8 +8,7 @@ module.exports = class NodeConfig{
         + " FROM node_dir_access nda JOIN node_dir nd ON nda.pathId=nd.pathId WHERE nda.userId="+db.escape(userId) +" LIMIT 1 "  
         + " ON DUPLICATE KEY UPDATE value = VALUES(value)"
         return db.query(strSql)
-
-    }
+    } 
 
     static removeConfig(nodeId,configId,userId){
         var strSQL = "DELETE nc FROM node_config nc "
@@ -18,10 +17,11 @@ module.exports = class NodeConfig{
         return db.query(strSQL)
     }
 
-    static enableNotification(nodeId,notId,userId){
-        var strSql = "INSERT INTO notification_config (nodeId, notId, userId) "
-        + " SELECT  "+db.escape(nodeId)+ ", " +db.escape(notId)+ ", " +db.escape(userId) 
-        + " FROM node_dir_access nda JOIN node_dir nd ON nda.pathId=nd.pathId WHERE nda.userId="+db.escape(userId) +" LIMIT 1" 
+    static enableNotification(nodeId,notId,userId,value){
+        var strSql = "INSERT INTO notification_config (nodeId, notId, userId,value) "
+        + " SELECT  "+db.escape(nodeId)+ ", " +db.escape(notId)+ ", " +db.escape(userId)  + ","+ db.escape(value)
+        + " FROM node_dir_access nda JOIN node_dir nd ON nda.pathId=nd.pathId WHERE nda.userId="+db.escape(userId) +" LIMIT 1 " 
+        + " ON DUPLICATE KEY UPDATE value = VALUES(value) "
         return db.query(strSql)
 
     }

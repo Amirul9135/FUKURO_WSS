@@ -15,6 +15,7 @@ class Database {
     }
 
     query(sql){
+        console.log("string query",sql)
         return new Promise((resolve, reject) => {
             this.#pool.query(sql, (error, results) => {
                 if (error) {
