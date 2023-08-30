@@ -33,14 +33,18 @@ module.exports = class Node_ {
         this.configs = await db.queryParams(strSql, this)
     }
 
+    //used to get node detail only if user have access 
     static async findNode(nodeId, userId) {
         var strSQL = "SELECT n.nodeId,n.name,n.description,n.passKey FROM node n JOIN node_dir d ON n.nodeId=d.nodeId JOIN node_dir_access a ON a.pathId=d.pathId"
             + " WHERE n.nodeId=" + db.escape(nodeId) + " AND a.userId=" + db.escape(userId)
-        let result = await db.query(strSQL)
-        if(result)
-            result = result[0]
-        return  result
+        let result = await db.query(strSQL) 
+        if(result.length !=0)
+            return result[0]
+        else
+            throw new Error("User have no access to node or the node doesn't exist") 
     }
+    
+
     static findUserAccessibleNodes(userId) {
         var strSQL = "SELECT n.nodeId,n.name,n.description FROM node n JOIN node_dir d ON n.nodeId=d.nodeId JOIN node_dir_access a ON a.pathId=d.pathId"
             + " WHERE a.userId=" + db.escape(userId) 

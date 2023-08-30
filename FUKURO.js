@@ -4,7 +4,18 @@ const { CLIENT_RENEG_LIMIT } = require("tls")
 
 //basically dictionary of hardcodded value in this system
 class FUKURO{ 
+    static CONFIGURE(obj){
+        FUKURO.AGENT.PATH[String(obj.id)] = obj.path
+        FUKURO.AGENT.DEFAULT.VAL[String(obj.id)] = obj.defVal
+        FUKURO.AGENT.MIN.VAL[String(obj.id)] = obj.minVal
+        FUKURO.MONITORING.NAMES[String(obj.id)] = obj.name
+    }
+    
     static MONITORING = class{
+        static NAMES = {}//reference for json
+        static getName(configId){
+            return FUKURO.MONITORING.NAMES[String(configId)]
+        }
         static PUSH = class{
             static Interval =  1//
             static Toggle = 2 //
@@ -81,6 +92,12 @@ class FUKURO{
                 return FUKURO.AGENT.DEFAULT.VAL[String(configId)]
             }
         } 
+        static MIN = class{
+            static VAL = {} // {Min,Max} 
+            static getMin(configId){
+                return FUKURO.AGENT.MIN.VAL[String(configId)]
+            }
+        }
         
         static config(configId,value){
             return {
@@ -155,7 +172,7 @@ class FUKURO{
 } 
 // agent config path mapping from static config id and the default value
 FUKURO.AGENT.PATH[String(FUKURO.MONITORING.PUSH.Interval)] = 'interval/push'
-FUKURO.AGENT.DEFAULT.VAL[String(FUKURO.MONITORING.PUSH.Interval)] = 60
+FUKURO.AGENT.DEFAULT.VAL[String(FUKURO.MONITORING.PUSH.Interval)] = 60 
 
 FUKURO.AGENT.PATH[String(FUKURO.MONITORING.PUSH.Toggle)] = 'toggle/push'
 FUKURO.AGENT.DEFAULT[String(FUKURO.MONITORING.PUSH.Toggle)] = 1
@@ -166,24 +183,41 @@ FUKURO.AGENT.DEFAULT.VAL[String(FUKURO.MONITORING.CPU.TOGGLE.Extract)] = 1// 1 t
 
 FUKURO.AGENT.PATH[String(FUKURO.MONITORING.CPU.TOGGLE.Realtime)] = 'toggle/realtime/cpu' 
 
-FUKURO.AGENT.PATH[String(FUKURO.MONITORING.CPU.INTERVAL.Extract)] = 'interval/cpu'
-FUKURO.AGENT.DEFAULT.VAL[String(FUKURO.MONITORING.CPU.INTERVAL.Extract)] = 15
 
-FUKURO.AGENT.PATH[String(FUKURO.MONITORING.CPU.INTERVAL.Realtime)] = 'interval/realtime/cpu'
-FUKURO.AGENT.DEFAULT.VAL[String(FUKURO.MONITORING.CPU.INTERVAL.Realtime)] = 1
 
 FUKURO.AGENT.PATH[String(FUKURO.MONITORING.CPU.ALERT.Threshold)] = 'alert/threshold/cpu'
 FUKURO.AGENT.DEFAULT.VAL[String(FUKURO.MONITORING.CPU.ALERT.Threshold)] = 80
 
-FUKURO.AGENT.PATH[String(FUKURO.MONITORING.CPU.ALERT.Tick)] = 'alert/threshold/tick/cpu'
-FUKURO.AGENT.DEFAULT.VAL[String(FUKURO.MONITORING.CPU.ALERT.Tick)] = 2
-
-FUKURO.AGENT.PATH[String(FUKURO.MONITORING.CPU.ALERT.Cooldown)] = 'alert/cooldown/cpu'
-FUKURO.AGENT.DEFAULT.VAL[String(FUKURO.MONITORING.CPU.ALERT.Cooldown)] = 600 //10 minute
-
+FUKURO.CONFIGURE({
+    id:FUKURO.MONITORING.CPU.INTERVAL.Extract,
+    path:'interval/cpu',
+    name:'extract',
+    minVal:10,
+    defVal:15
+}) 
+FUKURO.CONFIGURE({
+    id:FUKURO.MONITORING.CPU.INTERVAL.Realtime,
+    path:'interval/realtime/cpu',
+    name:'realtime',
+    minVal:1,
+    defVal:1
+}) 
+FUKURO.CONFIGURE({
+    id:FUKURO.MONITORING.CPU.ALERT.Tick,
+    path:'alert/threshold/tick/cpu',
+    name:'tick',
+    minVal:1,
+    defVal:2
+}) 
   
- 
-
+FUKURO.CONFIGURE({
+    id:FUKURO.MONITORING.CPU.ALERT.Cooldown,
+    path:'alert/cooldown/cpu',
+    name:'cooldown',
+    minVal:60,
+    defVal:600
+})
+  
 
 
 

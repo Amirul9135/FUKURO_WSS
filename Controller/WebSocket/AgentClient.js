@@ -39,6 +39,14 @@ class AgentClient extends WsClient {
         let msg = AGENT.config(configId,value)
         this.send(JSON.stringify(msg))
     }
+    // configs must be array of object {id:,val:}
+    changeConfigs(configs){
+        let msg = []
+        configs.forEach(e => {
+            msg.push(AGENT.config(e.id,e.val))
+        });
+        this.send(JSON.stringify(msg))
+    }
 
     _onOpen(){
         console.log("Agent on " + this.#node.name +" connected")
