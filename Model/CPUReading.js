@@ -26,7 +26,7 @@ module.exports = class CPUReading {
         return db.query(strSql)
     }
 
-    static saveReadings(nodeId, metrics) {// cpu arr should contain array of cpu reading object 
+    static saveReadings(nodeId, metrics) {// metrics should contain array of cpu reading object 
         var strSql = "INSERT INTO cpu_usage (dateTime,nodeId,system,user,interrupt) VALUES "
 
         metrics.forEach(cpu => {

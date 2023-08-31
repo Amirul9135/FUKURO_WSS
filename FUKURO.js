@@ -1,8 +1,7 @@
-//static fields for standardization
-
-const { CLIENT_RENEG_LIMIT } = require("tls")
+//static fields for standardization 
 
 //basically dictionary of hardcodded value in this system
+// for toggles except realtime. if record does not exist in db means active, if there is record in config then its disabled
 class FUKURO{ 
     static CONFIGURE(obj){
         FUKURO.AGENT.PATH[String(obj.id)] = obj.path
@@ -11,11 +10,18 @@ class FUKURO{
         FUKURO.MONITORING.NAMES[String(obj.id)] = obj.name
     }
     
+    static getName(configId){
+        return FUKURO.MONITORING.NAMES[String(configId)]
+    }
+    
+    static getDefaultValue(configId){
+        return FUKURO.AGENT.DEFAULT.VAL[String(configId)]
+    }
+    static getMin(configId){
+        return FUKURO.AGENT.MIN.VAL[String(configId)]
+    }
     static MONITORING = class{
         static NAMES = {}//reference for json
-        static getName(configId){
-            return FUKURO.MONITORING.NAMES[String(configId)]
-        }
         static PUSH = class{
             static Interval =  1//
             static Toggle = 2 //
@@ -30,7 +36,7 @@ class FUKURO{
                 static Realtime = 111 // not in db 
             }
             static ALERT = class{
-                static Threshold = 121 // notification table
+                static Threshold = 10 // notification table
                 static Tick = 122 //
                 static Cooldown = 123 //
             }
@@ -45,7 +51,7 @@ class FUKURO{
                 static Realtime = 211 // not in db 
             }
             static ALERT = class{
-                static Threshold = 221 // notification table
+                static Threshold = 20 // notification table
                 static Tick = 222 //
                 static Cooldown = 223 //
             }
@@ -60,7 +66,7 @@ class FUKURO{
                 static Realtime = 311 // not in db 
             }
             static ALERT = class{
-                static Threshold = 321 // notification table
+                static Threshold = 30 // notification table
                 static Tick = 322 //
                 static Cooldown = 323 //
             }
@@ -75,7 +81,7 @@ class FUKURO{
                 static Realtime = 411 // not in db 
             }
             static ALERT = class{
-                static Threshold = 421 // notification table
+                static Threshold = 40 // notification table
                 static Tick = 422 //
                 static Cooldown = 423 //
             }
@@ -88,81 +94,17 @@ class FUKURO{
         }
         static DEFAULT = class{
             static VAL = {}
-            static getValue(configId){
-                return FUKURO.AGENT.DEFAULT.VAL[String(configId)]
-            }
         } 
         static MIN = class{
             static VAL = {} // {Min,Max} 
-            static getMin(configId){
-                return FUKURO.AGENT.MIN.VAL[String(configId)]
-            }
         }
-        
         static config(configId,value){
             return {
                 path:FUKURO.AGENT.PATH[String(configId)],
                 data: value
             }
         }
-    }
-
-    //old mapping
-    static NODE = class{
-        static INTERVAL = class{
-            static push = 100//
-            static cpu = 101//
-            static mem = 102
-            static net = 103
-            static dsk = 104
-            static REALTIME = class{
-                static cpu = 111//
-                static mem = 112
-                static net = 113
-                static dsk = 114
-            }
-        }
-        static TOGGLE = class{
-            static push = 200//
-            static cpu = 201//
-            static mem = 202
-            static net = 203
-            static dsk = 204
-            static REALTIME = class{
-                static cpu = 211//
-                static mem = 212
-                static net = 213
-                static dsk = 214
-            }
-        }
-        static ALERT = class{
-            static up = 100 
-            static cpu = 101//
-            static mem = 102
-            static net = 103
-            static dsk = 104
-            static down = 111
-            static THRESHOLD = class{ //deprecated due to treshold value in notification select lowest
-                static cpu = 401//
-                static mem = 402
-                static net = 403
-                static dsk = 404
-            }
-            static TICK = class{
-                static cpu = 501//
-                static mem = 502
-                static net = 503
-                static dsk = 504
-            }
-            static COOLDOWN = class{
-                static cpu = 601//
-                static mem = 602
-                static net = 603
-                static dsk = 604
-            }
-        }
-    }
- 
+    } 
     static RESOURCE = class {
         static cpu = 1
         static mem = 2
@@ -170,23 +112,48 @@ class FUKURO{
         static dsk = 4
     }
 } 
-// agent config path mapping from static config id and the default value
-FUKURO.AGENT.PATH[String(FUKURO.MONITORING.PUSH.Interval)] = 'interval/push'
-FUKURO.AGENT.DEFAULT.VAL[String(FUKURO.MONITORING.PUSH.Interval)] = 60 
+// agent config path mapping from static config id  
 
-FUKURO.AGENT.PATH[String(FUKURO.MONITORING.PUSH.Toggle)] = 'toggle/push'
-FUKURO.AGENT.DEFAULT[String(FUKURO.MONITORING.PUSH.Toggle)] = 1
-
-/***CPU CONFIGS***/
-FUKURO.AGENT.PATH[String(FUKURO.MONITORING.CPU.TOGGLE.Extract)] = 'toggle/cpu' 
-FUKURO.AGENT.DEFAULT.VAL[String(FUKURO.MONITORING.CPU.TOGGLE.Extract)] = 1// 1 true
-
+//realtime configs not stored hence no need to have additional values
 FUKURO.AGENT.PATH[String(FUKURO.MONITORING.CPU.TOGGLE.Realtime)] = 'toggle/realtime/cpu' 
 
 
+// path is used to address agent operation
+// name is used to identify and determine JSON field
+// minVal is the minimum value
+// defVal is the default value
 
-FUKURO.AGENT.PATH[String(FUKURO.MONITORING.CPU.ALERT.Threshold)] = 'alert/threshold/cpu'
-FUKURO.AGENT.DEFAULT.VAL[String(FUKURO.MONITORING.CPU.ALERT.Threshold)] = 80
+/** Toggles **/ 
+FUKURO.CONFIGURE({
+    id:FUKURO.MONITORING.PUSH.Toggle,
+    path:'toggle/push',
+    name: 'active',
+    defVal: true  
+}) 
+FUKURO.CONFIGURE({
+    id:FUKURO.MONITORING.CPU.TOGGLE.Extract,
+    path:'toggle/cpu',
+    name: 'active',
+    defVal: true    
+})
+
+
+
+FUKURO.CONFIGURE({
+    id:FUKURO.MONITORING.CPU.ALERT.Threshold,
+    path:'alert/threshold/cpu',
+    name:'threshold',
+    minVal:50,
+    defVal: 0 // by default notification is disabled
+})
+
+FUKURO.CONFIGURE({
+    id:FUKURO.MONITORING.PUSH.Interval,
+    path:'interval/push',
+    name:'interval',
+    minVal:60,
+    defVal:300
+})
 
 FUKURO.CONFIGURE({
     id:FUKURO.MONITORING.CPU.INTERVAL.Extract,

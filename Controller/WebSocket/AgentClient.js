@@ -34,11 +34,7 @@ class AgentClient extends WsClient {
         //remove app from cache also
         this._cache.removeApp(userId)
     } 
-
-    changeConfig(configId,value){
-        let msg = AGENT.config(configId,value)
-        this.send(JSON.stringify(msg))
-    }
+ 
     // configs must be array of object {id:,val:}
     changeConfigs(configs){
         let msg = []
