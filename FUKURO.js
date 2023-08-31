@@ -22,6 +22,7 @@ class FUKURO{
     }
     static MONITORING = class{
         static NAMES = {}//reference for json
+        static Thresholds = []
         static PUSH = class{
             static Interval =  1//
             static Toggle = 2 //
@@ -104,6 +105,13 @@ class FUKURO{
                 data: value
             }
         }
+        static ALL(){
+            let all = []
+            Object.keys(FUKURO.AGENT.PATH).forEach(k=>{
+                all.push(parseInt(k))
+            })
+            return  all
+        }
     } 
     static RESOURCE = class {
         static cpu = 1
@@ -113,6 +121,12 @@ class FUKURO{
     }
 } 
 // agent config path mapping from static config id  
+
+// threshold ids
+FUKURO.MONITORING.Thresholds.push(FUKURO.MONITORING.CPU.ALERT.Threshold)
+//FUKURO.MONITORING.Thresholds.push(FUKURO.MONITORING.MEM.ALERT.Threshold)
+//FUKURO.MONITORING.Thresholds.push(FUKURO.MONITORING.NET.ALERT.Threshold)  not yet
+//FUKURO.MONITORING.Thresholds.push(FUKURO.MONITORING.DSK.ALERT.Threshold)
 
 //realtime configs not stored hence no need to have additional values
 FUKURO.AGENT.PATH[String(FUKURO.MONITORING.CPU.TOGGLE.Realtime)] = 'toggle/realtime/cpu' 

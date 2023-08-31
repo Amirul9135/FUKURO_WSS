@@ -231,9 +231,10 @@ class ConfigAPI extends RESTController {
     }
 
     async #refreshThreshold(nodeId, notId) {
-        let threshold = await NodeConfig.getThreshold(nodeId, notId)
-        threshold = (threshold) ? threshold : 0
-        this.#applyChanges(nodeId,[{id:nodeId,val:threshold}]) 
+        let agent = this.#cache.findAgent(nodeId)
+        if (agent) {//if agent in cahce (online)
+            await agent.refreshThreshold([notId])
+        } 
     }
 
     #checkParam(checkValue = false) {
@@ -267,4 +268,6 @@ class ConfigAPI extends RESTController {
 
     }
 }
+
+
 module.exports = ConfigAPI

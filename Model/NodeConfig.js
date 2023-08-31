@@ -1,6 +1,6 @@
 const db = require("../Controller/Database")
 const Node_ = require("./Node_")
-module.exports = class NodeConfig {
+class NodeConfig {
 
     static updateConfig(nodeId, configId, value, userId) {
         var strSql = "INSERT INTO node_config (nodeId, configId, value) "
@@ -67,17 +67,27 @@ module.exports = class NodeConfig {
         return db.query(strSql)
     }
 
-    static async getThreshold(nodeId, notId) {
-        var strSql = "SELECT MIN(value) AS MIN FROM notification_config WHERE nodeId="
-            + db.escape(nodeId) + " AND notId=" + db.escape(notId)
+    // ids is array of integers of configurable id
+    static async getThreshold(nodeId, ids) {
+        var strSql = "SELECT MIN(value) AS MIN,notId FROM notification_config WHERE nodeId="
+            + db.escape(nodeId) + " AND notId IN("
+        ids.forEach(id => {
+            strSql += db.escape(id) + ","
+        });
+        strSql = strSql.substring(0, strSql.length - 1) + ") GROUP BY notId";
         let result = await db.query(strSql)
-        return result[0].MIN
+        return result
     }
 
     //configs is array of id [1,2,3]
     static async getConfigs(nodeId, userId,configs ) {
 
         await Node_.findNode(nodeId, userId) // ensure user have connection with node being configured
+        return NodeConfig.getConfigsDirect(nodeId,configs)
+    }
+
+       //configs is array of id [1,2,3] not secured version only for internal uses
+    static async getConfigsDirect(nodeId,configs ) { 
         var strSql = "SELECT configId,value FROM node_config WHERE nodeId= " + db.escape(nodeId)
             + " AND configId IN("
         configs.forEach(conf => {
@@ -99,4 +109,5 @@ module.exports = class NodeConfig {
         return db.query(strSql)
 
     }
-}
+} 
+module.exports = NodeConfig
