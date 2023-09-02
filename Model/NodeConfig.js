@@ -69,12 +69,12 @@ class NodeConfig {
 
     // ids is array of integers of configurable id
     static async getThreshold(nodeId, ids) {
-        var strSql = "SELECT MIN(value) AS MIN,notId FROM notification_config WHERE nodeId="
+        var strSql = "SELECT DISTINCT notId,value from notification_config WHERE nodeId="
             + db.escape(nodeId) + " AND notId IN("
         ids.forEach(id => {
             strSql += db.escape(id) + ","
         });
-        strSql = strSql.substring(0, strSql.length - 1) + ") GROUP BY notId";
+        strSql = strSql.substring(0, strSql.length - 1) + ") ";
         let result = await db.query(strSql)
         return result
     }

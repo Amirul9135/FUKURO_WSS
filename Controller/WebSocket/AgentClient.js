@@ -69,6 +69,7 @@ class AgentClient extends WsClient {
             console.log("received non json " + message)
             return
         }
+        console.log(message)
         //  console.log("(agent)received",message)
         if (!message.path) {
             console.log('unknown instruction')
@@ -137,6 +138,7 @@ class AgentClient extends WsClient {
         // determine metric
         // determine intrested user
         // use one signal send 
+        console.log('alert',reading)
     }
 
     async  refreshThreshold(ids = FUKURO.MONITORING.Thresholds) { 
@@ -144,16 +146,19 @@ class AgentClient extends WsClient {
             console.log('error loading threshold' + error.message)
         })  
         let msg = []
+        console.log(threshold) 
         ids.forEach(e => { 
-            let val = threshold.filter(ts=> ts.notId === e)
-            if(val[0]){
-                val = val[0].MIN
-            }
-            else{
-                val = FUKURO.getDefaultValue(e)
-            }
+            let val = []
+            threshold.forEach(th=>{
+                if(th.notId == e){
+                    val.push(th.value)
+                }
+            }) 
+            
             msg.push(AGENT.config(e, val))
         }); 
+        console.log('msg')
+        console.log(msg)
         this.send(JSON.stringify(msg)) 
     }
 
