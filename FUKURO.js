@@ -126,11 +126,15 @@ class FUKURO {
 // agent config path mapping from static config id  
 
 // threshold ids
-FUKURO.MONITORING.Thresholds.push(FUKURO.MONITORING.CPU.ALERT.Threshold,FUKURO.MONITORING.MEM.ALERT.Threshold)
+FUKURO.MONITORING.Thresholds.push(
+    FUKURO.MONITORING.CPU.ALERT.Threshold,
+    FUKURO.MONITORING.MEM.ALERT.Threshold,
+    FUKURO.MONITORING.DSK.ALERT.Threshold) 
 
 //realtime configs not stored hence no need to have additional values
 FUKURO.AGENT.PATH[String(FUKURO.MONITORING.CPU.TOGGLE.Realtime)] = 'toggle/realtime/cpu'
 FUKURO.AGENT.PATH[String(FUKURO.MONITORING.MEM.TOGGLE.Realtime)] = 'toggle/realtime/mem'
+FUKURO.AGENT.PATH[String(FUKURO.MONITORING.DSK.TOGGLE.Realtime)] = 'toggle/realtime/dsk'
 
 
 // path is used to address agent operation
@@ -228,6 +232,37 @@ FUKURO.CONFIGURE({id: FUKURO.MONITORING.MEM.ALERT.Cooldown,
     defVal: 600
 })
 
+
+/**Disk configuration mapping */
+FUKURO.CONFIGURE({id: FUKURO.MONITORING.DSK.ALERT.Threshold,path: 'alert/threshold/dsk',
+    name: 'threshold',
+    minVal: 80,
+    defVal: 0 // by default notification is disabled
+}) 
+FUKURO.CONFIGURE({id: FUKURO.MONITORING.DSK.INTERVAL.Extract,
+    path: 'interval/dsk',
+    name: 'extract',
+    minVal: 10,
+    defVal: 20
+})
+FUKURO.CONFIGURE({id: FUKURO.MONITORING.DSK.INTERVAL.Realtime,
+    path: 'interval/realtime/dsk',
+    name: 'realtime',
+    minVal: 1,
+    defVal: 1
+})
+FUKURO.CONFIGURE({id: FUKURO.MONITORING.DSK.ALERT.Tick,
+    path: 'alert/threshold/tick/dsk',
+    name: 'tick',
+    minVal: 1,
+    defVal: 3 //1 minute
+})
+FUKURO.CONFIGURE({id: FUKURO.MONITORING.DSK.ALERT.Cooldown,
+    path: 'alert/cooldown/dsk',
+    name: 'cooldown',
+    minVal: 60,
+    defVal: 600
+})
 
 
 module.exports = FUKURO;

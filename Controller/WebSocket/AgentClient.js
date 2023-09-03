@@ -86,6 +86,12 @@ class AgentClient extends WsClient {
         else if (message.path.startsWith("reading")) {
             this.#saveReading(message.data)
         }
+        else if (message.path.startsWith("get/spec")) {
+            this.#fetchSpec(message)
+        }
+        else if (message.path.startsWith("post/spec")) {
+            this.#saveSpec(message)
+        }
 
     }
 
@@ -156,6 +162,31 @@ class AgentClient extends WsClient {
         console.log('alert',reading)
     }
 
+    async #fetchSpec(msg){
+        if(msg.path == 'get/spec/disk'){
+            let diskName = await NodeConfig.fetchDisks(this.#node.nodeId).catch(err=>{
+                console.log(err)
+            })
+            if(diskName){
+                let names = []
+                diskName.forEach(name=>{
+                    names.push(name.name)
+                })
+                this.send(JSON.stringify({
+                    path:"spec/disk",
+                    data:names
+                })) 
+
+            }
+        }
+    }
+
+    async #saveSpec(msg){
+        if(msg.path == 'post/spec/disk'){ 
+            NodeConfig.updateDisk(this.#node.nodeId,msg.data)
+        }
+
+    }
     async  refreshThreshold(ids = FUKURO.MONITORING.Thresholds) { 
         let threshold = await NodeConfig.getThreshold(this.#node.nodeId, ids).catch((error)=>{
             console.log('error loading threshold' + error.message)

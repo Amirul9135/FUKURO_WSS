@@ -119,5 +119,20 @@ class NodeConfig {
             + " WHERE latest.value IS NULL "  // if latest value joined not null means it is equal if not is null insert will happen since 1 row with the data in the dummy select
         return db.query(strSql) 
     }
+    //value example { sda: 26214400, sda1: 512, sda2: 262656, sda3: 25950208 }
+    static async updateDisk(nodeId,value){
+        let strSql = "INSERT into node_disk(nodeId,name,size) VALUES "
+        Object.keys(value).forEach(k=>{
+            strSql += "("+ db.escape(nodeId) + "," + db.escape(k) +"," + db.escape(value[k]) + "),"
+        })
+        strSql = strSql.substring(0, strSql.length - 1) + " ON DUPLICATE KEY UPDATE size = VALUES(size)"
+        return db.query(strSql)
+
+    }
+
+    static async fetchDisks(nodeId){
+        let strSql = 'SELECT * FROM node_disk WHERE nodeId=' + db.escape(nodeId) + " AND monitor = 1"
+        return db.query(strSql)
+    }
 } 
 module.exports = NodeConfig
