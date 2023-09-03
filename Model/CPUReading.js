@@ -12,7 +12,7 @@ module.exports = class CPUReading {
         interrupt: 10.00 
     }*/
     static save(nodeId,metrics){
-        let strSql = "INSERT INTO cpu_usage (dateTime,nodeId,system,user,interrupt) VALUES "
+        let strSql = "INSERT IGNORE INTO cpu_usage (dateTime,nodeId,system,user,interrupt) VALUES "
         metrics.forEach(cpu => {
             strSql += "(" + db.escape(cpu.dateTime) + "," + db.escape(nodeId) 
                 + "," + db.escape(cpu.system) + "," + db.escape(cpu.user) + "," + db.escape(cpu.interrupt) + "),"

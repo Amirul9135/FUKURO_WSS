@@ -1,6 +1,8 @@
 const FUKURO = require("../FUKURO")
 const CPUReading = require("../Model/CPUReading")
 const MEMReading = require("../Model/MEMReading")
+const DiskReading = require("../Model/DiskReading")
+const NETReading = require("../Model/NETReading")
 const db = require("./Database")
 
 class MetricController{
@@ -10,6 +12,12 @@ class MetricController{
         }
         else if (resId == FUKURO.RESOURCE.mem){
             return MEMReading.save(nodeId,values)
+        }
+        else if( resId == FUKURO.RESOURCE.dsk){
+            return DiskReading.save(nodeId,values)
+        }
+        else if (resId == FUKURO.RESOURCE.net){
+            return NETReading.save(nodeId,values)
         }
     }
 

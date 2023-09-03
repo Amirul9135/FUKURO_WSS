@@ -148,6 +148,12 @@ class AgentClient extends WsClient {
                 }
             } 
         }
+        if (readings['dsk']){
+            MetricController.saveReadings(FUKURO.RESOURCE.dsk, this.#node.nodeId, readings['dsk'])
+        }
+        if (readings['net']){
+            MetricController.saveReadings(FUKURO.RESOURCE.net, this.#node.nodeId, readings['net'])
+        }
     }
 
     #broadcastReading(reading) {
@@ -164,7 +170,7 @@ class AgentClient extends WsClient {
 
     async #fetchSpec(msg){
         if(msg.path == 'get/spec/disk'){
-            let diskName = await NodeConfig.fetchDisks(this.#node.nodeId).catch(err=>{
+            let diskName = await NodeConfig.fetchDisksToMonitor(this.#node.nodeId).catch(err=>{
                 console.log(err)
             })
             if(diskName){

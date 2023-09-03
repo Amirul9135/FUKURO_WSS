@@ -130,7 +130,7 @@ class NodeConfig {
 
     }
 
-    static async fetchDisks(nodeId){
+    static async fetchDisksToMonitor(nodeId){
         let strSql = 'SELECT * FROM node_disk WHERE nodeId=' + db.escape(nodeId) + " AND monitor = 1"
         return db.query(strSql)
     }
