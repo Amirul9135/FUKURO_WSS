@@ -1,11 +1,15 @@
 const FUKURO = require("../FUKURO")
 const CPUReading = require("../Model/CPUReading")
+const MEMReading = require("../Model/MEMReading")
 const db = require("./Database")
 
 class MetricController{
     static saveReadings(resId,nodeId,values){
-        if(resId = FUKURO.RESOURCE.cpu){
+        if(resId == FUKURO.RESOURCE.cpu){
             return CPUReading.save(nodeId,values)
+        }
+        else if (resId == FUKURO.RESOURCE.mem){
+            return MEMReading.save(nodeId,values)
         }
     }
 

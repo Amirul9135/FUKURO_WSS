@@ -1,38 +1,45 @@
  
 const db = require("../Controller/Database")
 
-module.exports = class CPUReading { 
+module.exports = class MEMReading { 
  
 
-    //each cpu in metrics should be
+    //each memory reading in metrics should be
     /*{
         dateTime: "YYYY-MM-DD HH:MM:SS",  
-        system: 80.00,
-        user: 20.00,
-        interrupt: 10.00 
+        used: 80.00,
+        cached: 20.00,
+        buffer: 10.00 
     }*/
     static save(nodeId,metrics){
-        let strSql = "INSERT INTO cpu_usage (dateTime,nodeId,system,user,interrupt) VALUES "
-        metrics.forEach(cpu => {
-            strSql += "(" + db.escape(cpu.dateTime) + "," + db.escape(nodeId) 
-                + "," + db.escape(cpu.system) + "," + db.escape(cpu.user) + "," + db.escape(cpu.interrupt) + "),"
+        let strSql = "INSERT INTO memory_usage (dateTime,nodeId,used,cached,buffer) VALUES "
+        metrics.forEach(mem => {
+            strSql += "(" + db.escape(mem.dateTime) + "," + db.escape(nodeId) 
+                + "," + db.escape(mem.used) + "," + db.escape(mem.cached) + "," + db.escape(mem.buffer) + "),"
         });
         strSql = strSql.substring(0, strSql.length - 1);
         return db.query(strSql)
     } 
 
+    static fetchMemTotal(nodeId,dstart,dend){
+        let strSql = "SELECT * FROM node_spec WHERE nodeId=" + db.escape(nodeId)
+            + " AND dateTime >= " + db.escape(dstart) + " AND dateTime <=" + db.escape(dend)
+            + " ORDER by dateTime DESC"
+        return db.query(strSql)
+    }
+
     static fetchHistorical(nodeId,intervalQuery){
         let strSql = intervalQuery
             + " SELECT " 
-            + "   COALESCE(AVG(c.user), 0) AS user, "
-            + "   COALESCE(AVG(c.interrupt), 0) AS interrupt, "
-            + "   COALESCE(AVG(c.system), 0) AS system, "
+            + "   COALESCE(AVG(m.used), 0) AS used, "
+            + "   COALESCE(AVG(m.cached), 0) AS cached, "
+            + "   COALESCE(AVG(m.buffer), 0) AS buffer, "
             + "   Intervals.end_interval  AS interval_group "
             + " FROM "
             + "   intervals "
-            + " LEFT JOIN cpu_usage c ON c.nodeId = " + db.escape(nodeId)  
-            + "     AND c.dateTime >= intervals.start_interval "
-            + "     AND c.dateTime < intervals.end_interval "
+            + " LEFT JOIN memory_usage m ON m.nodeId = " + db.escape(nodeId)  
+            + "     AND m.dateTime >= intervals.start_interval "
+            + "     AND m.dateTime < intervals.end_interval "
             + " GROUP BY "
             + " intervals.end_interval "
             + " ORDER BY "

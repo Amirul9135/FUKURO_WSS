@@ -127,6 +127,21 @@ class AgentClient extends WsClient {
         if (readings['cpu']) {
             MetricController.saveReadings(FUKURO.RESOURCE.cpu, this.#node.nodeId, readings['cpu'])
         }
+        if (readings['mem']){
+            MetricController.saveReadings(FUKURO.RESOURCE.mem, this.#node.nodeId, readings['mem'])
+            let memTotals = [] //{dt:,val:}
+            let dates = []
+            readings['mem'].forEach(r=>{ 
+                if(!memTotals.includes(r.total))
+                    memTotals.push(r.total)
+                    dates.push(r.dateTime)
+            })
+            if(memTotals){
+                for(let i=0;i < memTotals.length ; i ++){
+                    NodeConfig.updateSpec(this.#node.nodeId,FUKURO.SPEC.totalMemory, memTotals[i],dates[i])
+                }
+            } 
+        }
     }
 
     #broadcastReading(reading) {

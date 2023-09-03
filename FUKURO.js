@@ -90,7 +90,7 @@ class FUKURO {
     }
 
     static SPEC = class{
-        static MEMTotal = 251
+        static totalMemory = 251
     }
 
     static AGENT = class {

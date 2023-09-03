@@ -108,6 +108,16 @@ class NodeConfig {
         strSql = strSql.substring(0, strSql.length - 1) + ")";
         return db.query(strSql)
 
+    } 
+
+    static async updateSpec(nodeId,specId,value,dateTime){
+        var strSql = "INSERT INTO node_spec (nodeId, specId, dateTime, value) " 
+            + " SELECT  " + db.escape(nodeId) + ", " + db.escape(specId) + ", " + db.escape(dateTime) + ", " + db.escape(value) // value in select
+            + " FROM (SELECT 1) AS dummy " //dummy row as placeholder 1 fixed row
+            + " LEFT JOIN (SELECT value FROM node_spec WHERE specId="+db.escape(specId)+" ORDER BY dateTime DESC LIMIT 1) AS latest" // left join with latest config row
+            + " ON latest.value = " + db.escape(value) // join condition use value equal value being inserted
+            + " WHERE latest.value IS NULL "  // if latest value joined not null means it is equal if not is null insert will happen since 1 row with the data in the dummy select
+        return db.query(strSql) 
     }
 } 
 module.exports = NodeConfig
