@@ -170,21 +170,26 @@ class AgentClient extends WsClient {
 
     async #fetchSpec(msg){
         if(msg.path == 'get/spec/disk'){
-            let diskName = await NodeConfig.fetchDisksToMonitor(this.#node.nodeId).catch(err=>{
-                console.log(err)
-            })
-            if(diskName){
-                let names = []
-                diskName.forEach(name=>{
-                    names.push(name.name)
-                })
-                this.send(JSON.stringify({
-                    path:"spec/disk",
-                    data:names
-                })) 
-
-            }
+            this.refreshDisk()
         }
+    }
+
+    async refreshDisk(){
+        let diskName = await NodeConfig.fetchDisksToMonitor(this.#node.nodeId).catch(err=>{
+            console.log(err)
+        })
+        if(diskName){
+            let names = []
+            diskName.forEach(name=>{
+                names.push(name.name)
+            })
+            this.send(JSON.stringify({
+                path:"spec/disk",
+                data:names
+            })) 
+
+        }
+
     }
 
     async #saveSpec(msg){

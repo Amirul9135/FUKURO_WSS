@@ -144,6 +144,13 @@ FUKURO.AGENT.PATH[String(FUKURO.MONITORING.NET.TOGGLE.Realtime)] = 'toggle/realt
 // minVal is the minimum value
 // defVal is the default value
 
+FUKURO.CONFIGURE({id: FUKURO.MONITORING.PUSH.Interval,
+    path: 'interval/push',
+    name: 'interval',
+    minVal: 60,
+    defVal: 300
+})
+
 /** Toggles **/
 FUKURO.CONFIGURE({
     id: FUKURO.MONITORING.PUSH.Toggle,
@@ -157,12 +164,20 @@ FUKURO.CONFIGURE({
     name: 'active',
     defVal: true
 })
-
-FUKURO.CONFIGURE({id: FUKURO.MONITORING.PUSH.Interval,
-    path: 'interval/push',
-    name: 'interval',
-    minVal: 60,
-    defVal: 300
+FUKURO.CONFIGURE({id: FUKURO.MONITORING.MEM.TOGGLE.Extract,
+    path: 'toggle/mem',
+    name: 'active',
+    defVal: true
+})
+FUKURO.CONFIGURE({id: FUKURO.MONITORING.DSK.TOGGLE.Extract,
+    path: 'toggle/dsk',
+    name: 'active',
+    defVal: true
+})
+FUKURO.CONFIGURE({id: FUKURO.MONITORING.NET.TOGGLE.Extract,
+    path: 'toggle/net',
+    name: 'active',
+    defVal: true
 })
 
 /**CPU configuration mappings */

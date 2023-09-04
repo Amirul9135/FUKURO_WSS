@@ -134,5 +134,19 @@ class NodeConfig {
         let strSql = 'SELECT * FROM node_disk WHERE nodeId=' + db.escape(nodeId) + " AND monitor = 1"
         return db.query(strSql)
     }
+
+    static async fetchAllDisk(nodeId){
+        let strSql = 'SELECT * FROM node_disk WHERE nodeId=' + db.escape(nodeId)  
+        return db.query(strSql)
+    }
+
+    static async updateDiskStat(nodeId,dname,monitor){
+        let val = 0
+        if(monitor)
+            val =1
+        let strSql = 'UPDATE node_disk SET monitor=' + db.escape(val) 
+        + " WHERE nodeId="+ db.escape(nodeId)   + " AND name=" + db.escape(dname)
+        return db.query(strSql)
+    }
 } 
 module.exports = NodeConfig

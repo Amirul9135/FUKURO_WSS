@@ -40,7 +40,7 @@ class ConfigAPI extends RESTController {
             CONFIG.CPU.ALERT.Tick,
             CONFIG.CPU.ALERT.Cooldown,
             CONFIG.CPU.TOGGLE.Extract,
-        ],[
+        ], [
             CONFIG.CPU.ALERT.Threshold
         ])])
 
@@ -60,6 +60,135 @@ class ConfigAPI extends RESTController {
         this._router.delete("/:nodeId/alert/cpu", [this.#checkParam(), this.#disableNotification(CONFIG.CPU.ALERT.Threshold)])
 
         /**** END CPU metric configuration routes END ****/
+
+
+        /**** Memory metric configuration routes ****/
+
+        this._router.get("/:nodeId/mem", [this.#checkParam(), this.#fetchConfig([
+            CONFIG.MEM.INTERVAL.Extract,
+            CONFIG.MEM.INTERVAL.Realtime,
+            CONFIG.MEM.ALERT.Tick,
+            CONFIG.MEM.ALERT.Cooldown,
+            CONFIG.MEM.TOGGLE.Extract,
+        ], [
+            CONFIG.MEM.ALERT.Threshold
+        ])])
+
+        this._router.post("/:nodeId/monitoring/mem", [this.#checkParam(), this.#updateConfigurations([
+            CONFIG.MEM.INTERVAL.Extract,
+            CONFIG.MEM.INTERVAL.Realtime,
+            CONFIG.MEM.ALERT.Tick,
+            CONFIG.MEM.ALERT.Cooldown
+        ])])
+
+        //toggle
+        this._router.post("/:nodeId/monitoring/mem/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.MEM.TOGGLE.Extract, true)])
+        this._router.delete("/:nodeId/monitoring/mem/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.MEM.TOGGLE.Extract, false)])
+
+        //notification
+        this._router.post("/:nodeId/alert/mem", [this.#checkParam(true), this.#enableNotification(CONFIG.MEM.ALERT.Threshold)])
+        this._router.delete("/:nodeId/alert/mem", [this.#checkParam(), this.#disableNotification(CONFIG.MEM.ALERT.Threshold)])
+
+        /**** END Memory metric configuration routes END ****/
+
+        /**** Net metric configuration routes ****/
+
+        this._router.get("/:nodeId/net", [this.#checkParam(), this.#fetchConfig([
+            CONFIG.NET.INTERVAL.Extract,
+            CONFIG.NET.INTERVAL.Realtime,
+            CONFIG.NET.ALERT.Tick,
+            CONFIG.NET.ALERT.Cooldown,
+            CONFIG.NET.TOGGLE.Extract,
+        ], [
+            CONFIG.NET.ALERT.Threshold
+        ])])
+
+        this._router.post("/:nodeId/monitoring/net", [this.#checkParam(), this.#updateConfigurations([
+            CONFIG.NET.INTERVAL.Extract,
+            CONFIG.NET.INTERVAL.Realtime,
+            CONFIG.NET.ALERT.Tick,
+            CONFIG.NET.ALERT.Cooldown
+        ])])
+
+        //toggle
+        this._router.post("/:nodeId/monitoring/net/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.NET.TOGGLE.Extract, true)])
+        this._router.delete("/:nodeId/monitoring/net/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.NET.TOGGLE.Extract, false)])
+
+        //notification
+        this._router.post("/:nodeId/alert/net", [this.#checkParam(true), this.#enableNotification(CONFIG.NET.ALERT.Threshold)])
+        this._router.delete("/:nodeId/alert/net", [this.#checkParam(), this.#disableNotification(CONFIG.NET.ALERT.Threshold)])
+
+        /**** Net  metric configuration routes END ****/
+
+        /**** Disk metric configuration routes ****/
+
+        this._router.get("/:nodeId/disk", [this.#checkParam(), this.#fetchConfig([
+            CONFIG.DSK.INTERVAL.Extract,
+            CONFIG.DSK.INTERVAL.Realtime,
+            CONFIG.DSK.ALERT.Tick,
+            CONFIG.DSK.ALERT.Cooldown,
+            CONFIG.DSK.TOGGLE.Extract,
+        ], [
+            CONFIG.DSK.ALERT.Threshold
+        ])])
+
+        this._router.post("/:nodeId/monitoring/disk", [this.#checkParam(), this.#updateConfigurations([
+            CONFIG.DSK.INTERVAL.Extract,
+            CONFIG.DSK.INTERVAL.Realtime,
+            CONFIG.DSK.ALERT.Tick,
+            CONFIG.DSK.ALERT.Cooldown
+        ])])
+
+        //toggle
+        this._router.post("/:nodeId/monitoring/disk/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.DSK.TOGGLE.Extract, true)])
+        this._router.delete("/:nodeId/monitoring/disk/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.DSK.TOGGLE.Extract, false)])
+
+        //notification
+        this._router.post("/:nodeId/alert/disk", [this.#checkParam(true), this.#enableNotification(CONFIG.DSK.ALERT.Threshold)])
+        this._router.delete("/:nodeId/alert/disk", [this.#checkParam(), this.#disableNotification(CONFIG.DSK.ALERT.Threshold)])
+
+        //additional routes only for disk
+        this._router.get("/:nodeId/disk/list", [this.#checkParam(), this.#fetchDiskList()])
+
+        //toggle disk monitoring by name
+        this._router.post("/:nodeId/disk/:diskname", [this.#checkParam(), this.#updateDiskStat(true)])
+        this._router.delete("/:nodeId/disk/:diskname", [this.#checkParam(), this.#updateDiskStat(false)])
+
+        /**** Disk  metric configuration routes END ****/
+    }
+
+    #updateDiskStat(enable) {
+        return (req, res) => {
+            if (!req.params.diskname) {
+                return res.status(400).send({ message: 'invalid disk name' })
+            }
+            NodeConfig.updateDiskStat(req.nodeId, req.params.diskname, enable).then((result) => { 
+                if (!result.affectedRows) {
+                    return res.status(400).send({ message: "disk name doesn't exist" })
+                }
+                else {
+
+                    let agent = this.#cache.findAgent(req.nodeId)
+                    if (agent) {//if agent in cahce (online)
+                        agent.refreshDisk()
+                    }
+                    return res.status(200).send()
+                }
+            }).catch((err) => {
+                return res.status(500).send({ message: err.message })
+            })
+        }
+
+    }
+
+    #fetchDiskList() {
+        return (req, res) => {
+            NodeConfig.fetchAllDisk(req.nodeId).then((result) => {
+                return res.status(200).send(result)
+            }).catch((err) => {
+                return res.status(500).send({ message: err.message })
+            })
+        }
     }
 
     // configs must be array of configuration id and notifications is id of notification configuration
@@ -76,14 +205,14 @@ class ConfigAPI extends RESTController {
                 config = NodeConfig.getConfigs(req.nodeId, req.user.id, configs)
             }
             if (notifications.length > 0) {
-                notification = NodeConfig.getNotificationConfigs(req.nodeId, req.user.id,notifications )
+                notification = NodeConfig.getNotificationConfigs(req.nodeId, req.user.id, notifications)
             }
             Promise.all([config, notification]).then((result) => {
 
                 console.log(result)
-                let parsed = {} 
+                let parsed = {}
                 configs.forEach(e => {
-                    let value = result[0].filter(obj => obj.configId === e) 
+                    let value = result[0].filter(obj => obj.configId === e)
                     if (value.length > 0) {
                         value = value[0].value
                     }
@@ -97,7 +226,7 @@ class ConfigAPI extends RESTController {
                     parsed[FUKURO.getName(e)] = value
                 })
                 notifications.forEach(e => {
-                    let value = result[1].filter(obj => obj.notId === e) 
+                    let value = result[1].filter(obj => obj.notId === e)
                     if (value.length > 0) {
                         value = value[0].value
                     }
@@ -192,8 +321,8 @@ class ConfigAPI extends RESTController {
             // thus, insert = disable, remove = enable
             let operation = (enable) ? NodeConfig.removeConfig(req.nodeId, configId, req.user.id) :
                 NodeConfig.updateConfig(req.nodeId, configId, null, req.user.id)
-            operation.then((result) => { 
-                this.#applyChanges(req.nodeId,[{id:configId,val:enable}])
+            operation.then((result) => {
+                this.#applyChanges(req.nodeId, [{ id: configId, val: enable }])
                 return res.status(200).send()
             }).catch((error) => {
                 return res.status(500).send({ message: "Failed to " + msg, error: error.message })
@@ -234,7 +363,7 @@ class ConfigAPI extends RESTController {
         let agent = this.#cache.findAgent(nodeId)
         if (agent) {//if agent in cahce (online)
             await agent.refreshThreshold([notId])
-        } 
+        }
     }
 
     #checkParam(checkValue = false) {
@@ -259,7 +388,7 @@ class ConfigAPI extends RESTController {
             }
         ]
     }
- 
+
     #applyChanges(nodeId, configs) {
         let agent = this.#cache.findAgent(nodeId)
         if (agent) {//if agent in cahce (online)
