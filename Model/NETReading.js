@@ -21,7 +21,13 @@ module.exports = class NETReading {
                 + "," + db.escape(net.rkByte) + "," + db.escape(net.rError) + "," + db.escape(net.rDrop) 
                 + "," + db.escape(net.tkByte) + "," + db.escape(net.tError) + "," + db.escape(net.tDrop) + "),"
         });
-        strSql = strSql.substring(0, strSql.length - 1);
+        strSql = strSql.substring(0, strSql.length - 1)  + " ON DUPLICATE KEY UPDATE "
+        + " rkByte = (rkByte + VALUES(rkByte)) / 2, "
+        + " rError = (rError + VALUES(rError)) / 2, "
+        + " rDrop = (rDrop + VALUES(rDrop)) / 2, " 
+        + " tkByte = (rkByte + VALUES(rkByte)) / 2, "
+        + " tError = (rError + VALUES(rError)) / 2, "
+        + " tDrop = (rDrop + VALUES(rDrop)) / 2" 
         return db.query(strSql)
     }  
     static fetchHistorical(nodeId,intervalQuery){

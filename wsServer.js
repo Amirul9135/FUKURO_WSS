@@ -5,7 +5,8 @@ const UserCache = require('./Controller/UserCache')
 const jwtsCache = require('node-persist');
 const ConnectionHandler = require("./Controller/WebSocket/ConnectionHandler")
 const wsConnection = new ConnectionHandler()
-
+const db = require("./Controller/Database")
+ 
 let wss = new WSServer({ //create web socket OVER http
     server: server
 });
@@ -15,6 +16,7 @@ server.on('request', app);//mount app
 wss.on('connection', wsConnection.onConnect);
 
 server.listen(5000, async function () {
+    await db.init()
     await UserCache.load()
     await jwtsCache.init({
         dir: 'data/jwts',

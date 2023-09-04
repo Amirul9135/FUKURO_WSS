@@ -90,7 +90,12 @@ class FUKURO {
     }
 
     static SPEC = class{
+        static cpuName = 151
+        static cpuFreq = 152
+        static cpuCore = 153
+        static cpuCache = 154
         static totalMemory = 251
+        static ipAddress = 351
     }
 
     static AGENT = class {

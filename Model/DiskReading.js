@@ -18,7 +18,10 @@ module.exports = class DiskReading {
             strSql += "(" + db.escape(dsk.dateTime) + "," + db.escape(nodeId) + "," + db.escape(dsk.name)
                 + "," + db.escape(dsk.utilization) + "," + db.escape(dsk.readSpeed) + "," + db.escape(dsk.writeSpeed) + "),"
         });
-        strSql = strSql.substring(0, strSql.length - 1);
+        strSql = strSql.substring(0, strSql.length - 1) + " ON DUPLICATE KEY UPDATE "
+        + " utilization = (utilization + VALUES(utilization)) / 2, "
+        + " readSpeed = (readSpeed + VALUES(readSpeed)) / 2, "
+        + " writeSpeed = (writeSpeed + VALUES(writeSpeed)) / 2" 
         return db.query(strSql)
     } 
  

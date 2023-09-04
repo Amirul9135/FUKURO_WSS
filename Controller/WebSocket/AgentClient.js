@@ -75,6 +75,7 @@ class AgentClient extends WsClient {
         //  console.log("(agent)received",message)
         if (!message.path) {
             console.log('unknown instruction')
+            return
         }
         else if (message.path.startsWith("config")) {
             this.#loadNodeConfigs()
@@ -208,11 +209,12 @@ class AgentClient extends WsClient {
 
     async #fetchSpec(msg){
         if(msg.path == 'get/spec/disk'){
-            this.refreshDisk()
+            this.refreshDiskMonitor()
         }
     }
 
-    async refreshDisk(){
+    async refreshDiskMonitor(){
+        console.log('refresh disk')
         let diskName = await NodeConfig.fetchDisksToMonitor(this.#node.nodeId).catch(err=>{
             console.log(err)
         })
@@ -231,8 +233,19 @@ class AgentClient extends WsClient {
     }
 
     async #saveSpec(msg){
+        console.log(msg)
         if(msg.path == 'post/spec/disk'){ 
             NodeConfig.updateDisk(this.#node.nodeId,msg.data)
+        }
+        else if (msg.path == 'post/spec/cpu'){
+            let cpu = msg.data
+            await NodeConfig.updateSpec(this.#node.nodeId,FUKURO.SPEC.cpuName, cpu.name)
+            await NodeConfig.updateSpec(this.#node.nodeId,FUKURO.SPEC.cpuFreq, cpu.freq)
+            await NodeConfig.updateSpec(this.#node.nodeId,FUKURO.SPEC.cpuCore, cpu.cache)
+            await NodeConfig.updateSpec(this.#node.nodeId,FUKURO.SPEC.cpuCache, cpu.cores)
+        }
+        else if(msg.path == 'post/spec/ip'){
+            NodeConfig.updateSpec(this.#node.nodeId,FUKURO.SPEC.ipAddress, msg.data)
         }
 
     }
@@ -291,7 +304,12 @@ class AgentClient extends WsClient {
         }
 
     }
-
+ 
+    refreshDiskVolume(){
+        this.send(JSON.stringify({
+            path:'refresh/disk'
+        }))
+    }
     static genCMDID(length = 8) {
         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         let uniqueID = '';

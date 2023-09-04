@@ -12,12 +12,15 @@ module.exports = class CPUReading {
         interrupt: 10.00 
     }*/
     static save(nodeId,metrics){
-        let strSql = "INSERT IGNORE INTO cpu_usage (dateTime,nodeId,system,user,interrupt) VALUES "
+        let strSql = "INSERT INTO cpu_usage (dateTime,nodeId,system,user,interrupt) VALUES "
         metrics.forEach(cpu => {
             strSql += "(" + db.escape(cpu.dateTime) + "," + db.escape(nodeId) 
                 + "," + db.escape(cpu.system) + "," + db.escape(cpu.user) + "," + db.escape(cpu.interrupt) + "),"
         });
-        strSql = strSql.substring(0, strSql.length - 1);
+        strSql = strSql.substring(0, strSql.length - 1) + " ON DUPLICATE KEY UPDATE "
+        + " system = (system + VALUES(system)) / 2, "
+        + " user = (user + VALUES(user)) / 2, "
+        + " interrupt = (interrupt + VALUES(interrupt)) / 2" 
         return db.query(strSql)
     } 
 

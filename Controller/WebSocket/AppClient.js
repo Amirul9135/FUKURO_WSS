@@ -16,6 +16,7 @@ class AppClient extends WsClient {
         this._cache.addApp(this)
         this.#metric = []
         this.#directory = '/'
+        this.#connectedAgent.refreshDiskVolume()
         console.log("app connected " , user)
     }
     getMetric(){

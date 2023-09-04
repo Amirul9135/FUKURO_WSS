@@ -17,7 +17,10 @@ module.exports = class MEMReading {
             strSql += "(" + db.escape(mem.dateTime) + "," + db.escape(nodeId) 
                 + "," + db.escape(mem.used) + "," + db.escape(mem.cached) + "," + db.escape(mem.buffer) + "),"
         });
-        strSql = strSql.substring(0, strSql.length - 1);
+        strSql = strSql.substring(0, strSql.length - 1)  + " ON DUPLICATE KEY UPDATE "
+        + " used = (used + VALUES(used)) / 2, "
+        + " cached = (cached + VALUES(cached)) / 2, "
+        + " buffer = (buffer + VALUES(buffer)) / 2" 
         return db.query(strSql)
     } 
 

@@ -1,17 +1,24 @@
 const mysql = require('mysql');
 
 class Database {
-    #pool
-
-    constructor(config) {
+    #pool 
+    #config
+    constructor(config) { 
         this.#pool = mysql.createPool(config);
-        //test connection
-        this.#pool.getConnection((err, connection) => {
-            if (err)
-                throw err;
-            console.log('Successfully Connected to ' + config.database);
-            connection.release();
-        });
+        this.#config = config
+        //test connection  
+    }
+
+    init(){
+        return new Promise((resolve,reject)=>{
+            this.#pool.getConnection((err, connection) => {
+                if (err)
+                    reject(err)
+                console.log('Successfully Connected to ' + this.#config.database); 
+                connection.release();
+                resolve()
+            });
+        })
     }
 
     query(sql){

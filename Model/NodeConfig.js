@@ -110,9 +110,15 @@ class NodeConfig {
 
     } 
 
-    static async updateSpec(nodeId,specId,value,dateTime){
+    static async updateSpec(nodeId,specId,value,dateTime=null){
+        if(dateTime){
+            dateTime = db.escape(dateTime)
+        }
+        else{
+            dateTime = "NOW()"
+        }
         var strSql = "INSERT INTO node_spec (nodeId, specId, dateTime, value) " 
-            + " SELECT  " + db.escape(nodeId) + ", " + db.escape(specId) + ", " + db.escape(dateTime) + ", " + db.escape(value) // value in select
+            + " SELECT  " + db.escape(nodeId) + ", " + db.escape(specId) + ", " + dateTime + ", " + db.escape(value) // value in select
             + " FROM (SELECT 1) AS dummy " //dummy row as placeholder 1 fixed row
             + " LEFT JOIN (SELECT value FROM node_spec WHERE specId="+db.escape(specId)+" ORDER BY dateTime DESC LIMIT 1) AS latest" // left join with latest config row
             + " ON latest.value = " + db.escape(value) // join condition use value equal value being inserted
@@ -121,11 +127,11 @@ class NodeConfig {
     }
     //value example { sda: 26214400, sda1: 512, sda2: 262656, sda3: 25950208 }
     static async updateDisk(nodeId,value){
-        let strSql = "INSERT into node_disk(nodeId,name,size) VALUES "
+        let strSql = "INSERT into node_disk(nodeId,name,size,used) VALUES "
         Object.keys(value).forEach(k=>{
-            strSql += "("+ db.escape(nodeId) + "," + db.escape(k) +"," + db.escape(value[k]) + "),"
+            strSql += "("+ db.escape(nodeId) + "," + db.escape(k) +"," + db.escape(value[k].size) +"," + db.escape(value[k].used) + "),"
         })
-        strSql = strSql.substring(0, strSql.length - 1) + " ON DUPLICATE KEY UPDATE size = VALUES(size)"
+        strSql = strSql.substring(0, strSql.length - 1) + " ON DUPLICATE KEY UPDATE size = VALUES(size),used =VALUES(used) "
         return db.query(strSql)
 
     }
