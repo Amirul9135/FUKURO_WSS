@@ -23,28 +23,22 @@ module.exports = class NETReading {
         });
         strSql = strSql.substring(0, strSql.length - 1);
         return db.query(strSql)
-    } 
-
-    static fetchMemTotal(nodeId,dstart,dend){
-        let strSql = "SELECT * FROM node_spec WHERE nodeId=" + db.escape(nodeId)
-            + " AND dateTime >= " + db.escape(dstart) + " AND dateTime <=" + db.escape(dend)
-            + " ORDER by dateTime DESC"
-        return db.query(strSql)
-    }
-
+    }  
     static fetchHistorical(nodeId,intervalQuery){
         let strSql = intervalQuery
-            + " SELECT " 
-            + "   d.name"
-            + "   COALESCE(AVG(d.utilization), 0) AS utilization, "
-            + "   COALESCE(AVG(d.readSpeed), 0) AS readSpeed, "
-            + "   COALESCE(AVG(d.writeSpeed), 0) AS writeSpeed, "
+            + " SELECT "  
+            + "   COALESCE(AVG(n.rkByte), 0) AS rkByte, "
+            + "   COALESCE(AVG(n.rError), 0) AS rError, "
+            + "   COALESCE(AVG(n.rDrop), 0) AS rDrop, "
+            + "   COALESCE(AVG(n.tkByte), 0) AS tkByte, "
+            + "   COALESCE(AVG(n.tError), 0) AS tError, "
+            + "   COALESCE(AVG(n.tDrop), 0) AS tDrop, "
             + "   Intervals.end_interval  AS interval_group "
             + " FROM "
             + "   intervals "
-            + " LEFT JOIN disk_usage d ON d.nodeId = " + db.escape(nodeId)  
-            + "     AND d.dateTime >= intervals.start_interval "
-            + "     AND d.dateTime < intervals.end_interval "
+            + " LEFT JOIN network_usage n ON n.nodeId = " + db.escape(nodeId)  
+            + "     AND n.dateTime >= intervals.start_interval "
+            + "     AND n.dateTime < intervals.end_interval "
             + " GROUP BY "
             + " intervals.end_interval "
             + " ORDER BY "

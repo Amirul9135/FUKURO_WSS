@@ -21,7 +21,7 @@ class MetricController{
         }
     }
 
-    static fetchHistoricalData(resId,nodeId,interval,duration,date){
+    static fetchHistoricalData(resId,nodeId,interval,duration,date,diskonly){
         var refDate = " NOW() "
         if(date){
             refDate = " STR_TO_DATE(" + db.escape(date) + ", '%Y-%m-%d %H:%i') "
@@ -37,6 +37,15 @@ class MetricController{
         console.log('sql',sql) 
         if(resId == FUKURO.RESOURCE.cpu){
             return CPUReading.fetchHistorical(nodeId,sql)
+        }
+        else if(resId == FUKURO.RESOURCE.mem){
+            return MEMReading.fetchHistorical(nodeId,sql)
+        }
+        else if(resId == FUKURO.RESOURCE.net){
+            return NETReading.fetchHistorical(nodeId,sql)
+        }
+        else if(resId == FUKURO.RESOURCE.dsk){
+            return DiskReading.fetchHistorical(nodeId,sql,diskonly)
         }
     }
 }
