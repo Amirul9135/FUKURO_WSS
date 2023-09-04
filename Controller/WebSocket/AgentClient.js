@@ -10,15 +10,14 @@ class AgentClient extends WsClient {
     #node //node object reference
     #connectedApps = [] //list of connected AppClient
     #oneSignal
+    #cmd 
 
     constructor(wsc, node, cache) {
         super(wsc, cache)
         this.#node = node
         this.#oneSignal = FUKURO_OS
-        this._cache.addAgent(this)
-        this.send({
-            "path": "connected"
-        })
+        this._cache.addAgent(this) 
+        this.#cmd = {}
         console.log('agent connected', node)
     }
 
@@ -34,6 +33,7 @@ class AgentClient extends WsClient {
         this.#connectedApps = this.#connectedApps.filter((app) => { app.getUser().userId !== userId })
         //remove app from cache also
         this._cache.removeApp(userId)
+        this.toggleRealtime()
     }
 
     // configs must be array of object {id:,val:}
@@ -57,7 +57,10 @@ class AgentClient extends WsClient {
         // get list of user for down notification
 
         // send noti via onesignal
-
+        this.#connectedApps.forEach(app=>{
+            app.send({message:'agent offline'})
+            app.close()
+        })
         this._cache.removeAgent(this.#node.nodeId)
         console.log("Agent on node " + this.#node.name + " closed connection")
     }
@@ -68,8 +71,7 @@ class AgentClient extends WsClient {
         } catch (e) {
             console.log("received non json " + message)
             return
-        }
-        console.log(message)
+        } 
         //  console.log("(agent)received",message)
         if (!message.path) {
             console.log('unknown instruction')
@@ -91,6 +93,9 @@ class AgentClient extends WsClient {
         }
         else if (message.path.startsWith("post/spec")) {
             this.#saveSpec(message)
+        }
+        else if (message.path.startsWith("command/")) {
+            this.#cmdCallBack(message)
         }
 
     }
@@ -124,9 +129,25 @@ class AgentClient extends WsClient {
         this.refreshThreshold()
     }
 
-    #toggleRealtime() {
+    toggleRealtime() {
         //turn on off etc
         //check current realtime state, loop through apps, check what metric being monitored
+        let res = {}
+        res[String(FUKURO.MONITORING.CPU.TOGGLE.Realtime)] = false
+        res[String(FUKURO.MONITORING.MEM.TOGGLE.Realtime)] = false
+        res[String(FUKURO.MONITORING.NET.TOGGLE.Realtime)] = false
+        res[String(FUKURO.MONITORING.DSK.TOGGLE.Realtime)] = false 
+        this.#connectedApps.forEach(app=>{
+            app.getMetric().forEach(m=>{
+                res[String(m)] = true
+            }) 
+        })
+        let msg = []
+        Object.keys(res).forEach(k=>{
+            msg.push (AGENT.config(k,res[k]))
+        })
+        this.send(JSON.stringify(msg))
+
     }
 
     #saveReading(readings) {
@@ -158,7 +179,24 @@ class AgentClient extends WsClient {
 
     #broadcastReading(reading) {
         // loop through apps, send to one that are monitoring
-
+        let id=0 
+        if(reading.path == 'realtime/cpu'){
+            id = FUKURO.MONITORING.CPU.TOGGLE.Realtime
+        } 
+        if(reading.path == 'realtime/mem'){
+            id = FUKURO.MONITORING.MEM.TOGGLE.Realtime
+        } 
+        if(reading.path == 'realtime/net'){
+            id = FUKURO.MONITORING.NET.TOGGLE.Realtime
+        } 
+        if(reading.path == 'realtime/dsk'){
+            id = FUKURO.MONITORING.DSK.TOGGLE.Realtime
+        } 
+        this.#connectedApps.forEach(app=>{
+            if(app.getMetric().includes(id)){
+                app.send(reading)
+            }
+        })
     }
 
     #generateAlert(reading) {
@@ -218,6 +256,53 @@ class AgentClient extends WsClient {
         console.log(msg)
         this.send(JSON.stringify(msg)) 
     }
+
+    executeCommand(cmd,dir,isTool){
+        let id = AgentClient.genCMDID()
+        while(id in this.#cmd){
+            id = AgentClient.genCMDID()
+        }       
+        let msg =   {
+            path:'command',
+            data:{
+                dir:dir,
+                id:id,
+                cmd:cmd.trim()
+            }
+        }
+        if (isTool){
+            msg.data['isTool'] = true
+        }
+        this.send(JSON.stringify(msg)) 
+        return new Promise((resolve,reject)=>{
+            this.#cmd[id] = resolve
+        })
+ 
+    }
+
+    // this method will redirect the message data to resolve command promises if exist
+    #cmdCallBack(msg){  
+        let id = msg.path.slice(msg.path.lastIndexOf('/') + 1);
+        console.log(msg)
+        if(this.#cmd[id]){
+            this.#cmd[id](msg.data)
+
+            delete this.#cmd[id]
+        }
+
+    }
+
+    static genCMDID(length = 8) {
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let uniqueID = '';
+      
+        for (let i = 0; i < length; i++) {
+          const randomIndex = Math.floor(Math.random() * characters.length);
+          uniqueID += characters.charAt(randomIndex);
+        }
+      
+        return uniqueID;
+      }
 
 }
 

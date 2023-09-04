@@ -10,17 +10,14 @@
         var ws
         function initWs() {
             ws = new WebSocket('ws:/localhost:5000/');
+            
             var verfReq = {
-                verify: {
-                    "jwt": "eyJ1c2VyIjp7ImlkIjoxLCJuYW1lIjoiYW1pcnVsIiwidXNlcm5hbWUiOiJhYTExMjIifSwiaWF0IjoxNjg3MDUxMzU4fQ.IepgcjA7kFi0Ja__3hvokFHolOQKR0LrlgqgJbJcKQQ",
-                    "uid": 1,
-                    "nodeId": 1,
-                    "passKey": "asd123",
-                    "client": "app",
-                    "metric": {
-                        cpu: 1,
-                        mem: 1
-                    }
+                path:'verify/app',
+                data: {
+                    "nodeId":1,
+                    "passKey":"asd123",
+                    "jwt":"eyJ1c2VyIjp7ImlkIjoxLCJuYW1lIjoiYW1pcnVsIGFzcmFmIiwidXNlcm5hbWUiOiJhYTExMjMifSwiaWF0IjoxNjkzMjczNTk0fQ.HG2SJXWqhh6JIwIhSGMnDsNWilfKfCFzO6iNdXjUx1M",
+                    "uid":1
                 }
             }
 
@@ -32,7 +29,25 @@
             }
         }
         function msg() {
-            ws.send("ping")
+            let p = document.getElementById('path').value 
+            let d = document.getElementById('data').value 
+            let msg = {
+                path:p,
+                data:d
+            }
+            console.log(msg)
+            ws.send(JSON.stringify(msg))
+        }
+        function tool() {
+            let p = document.getElementById('path').value 
+            let d = document.getElementById('data').value 
+            let msg = {
+                isTool:true,
+                path:p,
+                data:d
+            }
+            console.log(msg)
+            ws.send(JSON.stringify(msg))
         }
         function closeWs() {
             ws.close()
@@ -44,7 +59,12 @@
 
     <button onclick="initWs()">conn App</button>
     <button onclick="msg()">message</button>
+    <button onclick="tool()">tool</button>
     <button onclick="closeWs()">close</button>
+    <div>
+   path <input type="text" id="path">
+   data <textarea id="data"></textarea>
+    </div>
 </body>
 
 </html>

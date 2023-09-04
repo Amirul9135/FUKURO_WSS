@@ -28,6 +28,9 @@ class WsClient{
         this.#ws.on('error', (error) => {
             this.#onError(error)
         });
+        this.send({
+            "path": "connected"
+        })
     }
 
     send(message){
