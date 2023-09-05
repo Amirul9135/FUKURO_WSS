@@ -16,6 +16,8 @@ class UserAPI extends RESTController {
         this._router.put("/",this.#updateUser())
         this._router.get("/",this.#getUser())
         this._router.get("/logout",this.#logout())
+        //simple verification route to only check token
+        this._router.get("/verify",  [this._auth.authRequest(),function(req,res){ return res.status(200).send()}])
     }
 
     #registerUser() {

@@ -27,6 +27,7 @@ class NodeAPI extends RESTController {
           .then(async function (result) {
             var isMatch = (result) ? await bcrypt.compare(req.body.passKey, result.passKey) : false
             result.passKey = null;
+            console.log(result)
             if (isMatch) return res.status(200).send(result);
             else return res.status(401).send({ message: "no access" });
           })

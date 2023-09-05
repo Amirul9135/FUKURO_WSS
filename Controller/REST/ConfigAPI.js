@@ -334,6 +334,13 @@ class ConfigAPI extends RESTController {
     //config id parametized so that method can be resused for multiple path (value and node from request object)
     #enableNotification(notId) {
         return (req, res) => {
+            if (req.value < FUKURO.getMin(notId)) {
+                return res.status(400).send({
+                    message: "Error :  value=" + req.value
+                        + " less than minimum " + FUKURO.getMin(notId)
+                })
+            }
+
             NodeConfig.enableNotification(req.nodeId, notId, req.user.id, req.value).then(async (result) => {
                 if (result && !result.affectedRows) {
                     return res.status(400).send({ message: "Failed to enable notification", error: "Node doesn't exist or user have no access" })

@@ -12,11 +12,15 @@ const WsClientCache = require("./WsClientCache")
 class ConnectionHandler {
  
     async onConnect(ws, req, a) { 
-        ws.on('message', async function parseMessage(message) { 
+
+        ws.on('message', async function parseMessage(message) {  
+            
             try {
-                message = JSON.parse(message)
+                message = JSON.parse(message)  
+                console.log(message)
             } catch (e) {
                 ws.send(JSON.stringify({ error: "Unable to connect: invalid message content"  }))
+                
                 ws.close()
                 return
             }
