@@ -27,7 +27,7 @@ class MetricsAPI extends RESTController {
             } 
 
             MetricController.fetchHistoricalData(resId,req.params.nodeId,
-                req.query.interval,req.query.duration,req.query.date,diskonly).then((result)=>{
+                req.query.interval,req.query.start,req.query.end,diskonly).then((result)=>{
                     return res.status(200).send(result)
 
                 }).catch((error)=>{
@@ -44,11 +44,8 @@ class MetricsAPI extends RESTController {
                 console.log(req.params)
                 console.log(req.query)
                 if (req.params && req.params.nodeId
-                    && req.query && req.query.duration && req.query.interval) { 
-
-                    if (req.query.date && !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(req.query.date)) {
-                        return res.status(400).send({ message: "invalid date" });
-                    }
+                    && req.query && req.query.start  && req.query.interval) { 
+ 
                     next()
                 }
                 else {

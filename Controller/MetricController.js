@@ -21,19 +21,18 @@ class MetricController{
         }
     }
 
-    static fetchHistoricalData(resId,nodeId,interval,duration,date,diskonly){
-        var refDate = " NOW() "
-        if(date){
-            refDate = " STR_TO_DATE(" + db.escape(date) + ", '%Y-%m-%d %H:%i') "
-        }
-        var sql = "WITH RECURSIVE intervals AS ( "
-            + " SELECT "
-            + "  CAST(DATE_FORMAT(TIMESTAMP(DATE_SUB(" + refDate + ", INTERVAL " + db.escape(duration) + " SECOND)), '%Y-%m-%d %H:%i:00') AS DATETIME) AS start_interval, "
-            + "  CAST(DATE_FORMAT(TIMESTAMP(DATE_SUB(" + refDate + ", INTERVAL " + db.escape(duration) + " SECOND)) + INTERVAL " + db.escape(interval) + " SECOND, '%Y-%m-%d %H:%i:00') AS DATETIME) AS end_interval "
-            + " UNION ALL "
-            + " SELECT end_interval, end_interval + INTERVAL " + db.escape(interval) + " SECOND "
-            + " FROM intervals "
-            + " WHERE end_interval < " + refDate + " ) "
+    static fetchHistoricalData(resId,nodeId,interval,sDate,enDate,diskonly){
+        console.log(sDate)
+        let start =  (sDate == null)? " NOW() ": db.escape(sDate)
+        console.log(start)
+        let end  = (enDate == null)? " NOW() ": db.escape(enDate) 
+        interval = db.escape(interval);
+        let sql = "WITH RECURSIVE intervals AS ( "
+            + " SELECT  " 
+                + " CAST(DATE_FORMAT("+start+  ", '%Y-%m-%d %H:%i:%s') AS DATETIME) AS start_interval, "   	//first start	  	
+                + " CAST(DATE_FORMAT("+start+" + INTERVAL "+interval+" SECOND, '%Y-%m-%d %H:%i:%s') AS DATETIME) AS end_interval " 	// plus second interval for first end
+            + " UNION ALL  "
+            + " SELECT end_interval, end_interval + INTERVAL "+interval+" SECOND  FROM intervals  WHERE end_interval <  "+end+" ) " // until end date
         console.log('sql',sql) 
         if(resId == FUKURO.RESOURCE.cpu){
             return CPUReading.fetchHistorical(nodeId,sql)

@@ -19,6 +19,8 @@ app.get("/api/test", (req, res) => {
 })
 
 app.get("/", function (req, res) {
+    //kalau script td run die masuk sini nnt log bwh tu
+    console.log('test req');
     return res.status(200).send("test");
 })
 module.exports = app;
