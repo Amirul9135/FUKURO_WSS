@@ -18,8 +18,31 @@ class UserAPI extends RESTController {
         this._router.get("/logout",this.#logout())
         //simple verification route to only check token
         this._router.get("/verify",  [this._auth.authRequest(),function(req,res){ return res.status(200).send()}])
-    }
 
+        //paramas node i
+        //query k= &k= , multiple k if needed, as search keys
+        //access=true/false
+        this._router.get("/find/:nodeId",[this._auth.authRequest(),this.#findUser()]) 
+    }
+    #findUser(){
+        return [
+            (req,res)=>{ 
+
+                if(!req.params.nodeId){
+                    return res.status(400).send({message:"No node id specified"})
+                }
+                let keys =[ req.query.k]
+                if(!keys){
+                    keys = []
+                }
+                User.findUser(req.params.nodeId,keys,req.query.access).then((result)=>{
+                    return res.status(200).send(result)
+                }).catch((err)=>{
+                    return res.status(500).send({message:err.message})
+                })
+            }
+        ]
+    }
     #registerUser() {
         return [
             this._validator.checkString("name", "name is required"),

@@ -125,6 +125,12 @@ class NodeConfig {
             + " WHERE latest.value IS NULL "  // if latest value joined not null means it is equal if not is null insert will happen since 1 row with the data in the dummy select
         return db.query(strSql) 
     }
+
+    static async getNodeSpec(nodeId){
+        let sql = "SELECT MAX(dateTime) as dateTime, specId,value FROM node_spec WHERE nodeId="+db.escape(nodeId)+" GROUP by specId"
+        return db.query(sql);
+    }
+
     //value example { sda: 26214400, sda1: 512, sda2: 262656, sda3: 25950208 }
     static async updateDisk(nodeId,value){
         let strSql = "INSERT into node_disk(nodeId,name,size,used) VALUES "

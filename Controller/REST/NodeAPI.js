@@ -2,7 +2,9 @@
 const RESTController = require("./RESTController") // rest controller base class
 const NodeDir = require("../../Model/NodeDir")
 const Node_ = require("../../Model/Node_");
+const NodeConfig = require("../../Model/NodeConfig")
 const bcrypt = require("bcryptjs");
+const FUKURO = require("../../FUKURO");
 
 class NodeAPI extends RESTController {
   constructor() {
@@ -14,6 +16,47 @@ class NodeAPI extends RESTController {
     this._router.get("/", this.#fetchAccessibleNodes())
     this._router.get("/:nodeId",this.#nodeDetails())
     this._router.put("/",this.#updateNode())
+    this._router.get("/:nodeId/info",this.#getSpec())
+    this._router.post("/:nodeId/grant/:userId",this.#toggleAccess(true))
+    this._router.delete("/:nodeId/grant/:userId",this.#toggleAccess(false))
+  }
+  #toggleAccess(access){
+    return [
+      this._auth.authRequest(),
+      (req,res)=>{
+        try{
+          parseInt(req.params.nodeId)
+          parseInt(req.params.userId)
+        }
+        catch(e){
+          return res.status(400).send({message:"Invalid node id or user id"})
+        }
+        NodeDir.grantAccessToNode(req.user.id,req.params.userId,req.params.nodeId,access).then((result)=>{
+          return res.status(200).send()
+        }).catch((error)=>{
+          return res.status(500).send({message:error.message})
+        })
+      }
+    ]
+  }
+  #getSpec(){
+    return [
+      this._auth.authRequest(),
+      (req,res)=>{
+        if(!req.params.nodeId){
+          return res.status(400).send();
+        }
+        NodeConfig.getNodeSpec(req.params.nodeId).then((result)=>{
+          let realRes = {}
+          result.forEach(s => {
+            realRes[FUKURO.SPEC.getName(s.specId)] = s.value;
+          });
+          return res.status(200).send(realRes)
+        }).catch((err)=>{
+          return res.status(500).send({message:err.message})
+        })
+      }
+    ]
   }
   #verifyAccess() {
     return [
