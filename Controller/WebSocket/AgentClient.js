@@ -58,7 +58,7 @@ class AgentClient extends WsClient {
 
         // send noti via onesignal
         this.#connectedApps.forEach(app=>{
-            app.send({message:'agent offline'})
+            app.send({error:'agent offline'})
             app.close()
         })
         this._cache.removeAgent(this.#node.nodeId)
@@ -195,6 +195,7 @@ class AgentClient extends WsClient {
         } 
         this.#connectedApps.forEach(app=>{
             if(app.getMetric().includes(id)){
+                console.log("sending");
                 app.send(reading)
             }
         })
