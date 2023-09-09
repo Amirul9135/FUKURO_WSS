@@ -50,6 +50,18 @@ module.exports = class Node_ {
             + " WHERE a.userId=" + db.escape(userId) 
         return db.query(strSQL)
     }
+
+    static findAllAssociatedUser(nodeId){
+        let sql = "SELECT DISTINCT u.userId FROM user u join node_dir_access nda ON nda.userId = u.userId JOIN node_dir nd ON nd.pathId = nda.pathId "
+            " WHERE nd.nodeId = " + db.escape(nodeId)
+        return db.query(sql);
+    }
+
+    static findUserByThreshold(nodeId,notId,value){
+        let sql = "SELECT DISTINCT userId FROM notification_config WHERE notId = " + db.escape(notId)
+            + " AND nodeId = " +db.escape(nodeId)+ " AND value <= " + db.escape(value)
+        return db.query(sql);
+    }
 /* not here
     static findUserToNotify(userId, resourceType) {
         var strSql = "SELECT userId FROM user_notification WHERE nodeId=" + db.escape(userId) + " AND resourceType=" + db.escape(resourceType)

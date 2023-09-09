@@ -15,6 +15,7 @@ app.use("/api/metric", new MetricsAPI().routes())
 //app.use("/test", require("./Controller/REST/TestAPI"))
 
 app.get("/api/test", (req, res) => {
+    console.log("test ping on "+new Date().toDateString())
     return res.send(new Date().toDateString())
 })
 
@@ -23,4 +24,4 @@ app.get("/", function (req, res) {
     console.log('test req');
     return res.status(200).send("test");
 })
-module.exports = app;
+module.exports = app; 

@@ -6,48 +6,48 @@ class AppClient extends WsClient {
     //attributes
     #user //object of user
     #connectedAgent // object of AgentClient 
-    #metric 
+    #metric
     #directory
 
-    constructor(wsc,agent,user,cache){
-        super(wsc,cache)
+    constructor(wsc, agent, user, cache) {
+        super(wsc, cache)
         this.#connectedAgent = agent
-        this.#user = user 
+        this.#user = user
         this._cache.addApp(this)
         this.#metric = []
         this.#directory = '/'
         this.#connectedAgent.refreshDiskVolume()
-        console.log("app connected " , user)
+        console.log("app connected ", user)
     }
-    getMetric(){
+     getMetric() {
         return this.#metric
     }
-    getUser(){
+     getUser() {
         return this.#user
     }
 
-    getConnectedAgent(){
+     getConnectedAgent() {
         return this.#connectedAgent
     }
 
-    _onOpen(){
-        console.log("user " + this.#user.id +" connected")
+    async _onOpen() {
+        console.log("user " + this.#user.id + " connected")
     }
 
-    _onClose(){
+    async _onClose() {
         //remove closed client from monitored agent *action is in the agent itself
         this.#connectedAgent.removeAppClient(this.#user.id)
-        console.log("user " + this.#user +" closed connection")
+        console.log("user " + this.#user + " closed connection")
 
     }
 
-    _handleMessage(message){
+    async _handleMessage(message) {
         try {
             message = JSON.parse(message)
         } catch (e) {
             console.log("received non json " + message)
             return
-        }  
+        }
         if (!message.path) {
             console.log('unknown instruction')
         }
@@ -59,8 +59,8 @@ class AppClient extends WsClient {
         }
     }
 
-    #toggleMetric(msg){
-        console.log('msg',msg)
+    async  #toggleMetric(msg) {
+        console.log('msg', msg)
         let id = 0
         if (msg.path == "metric/cpu") {
             id = FUKURO.MONITORING.CPU.TOGGLE.Realtime
@@ -74,34 +74,34 @@ class AppClient extends WsClient {
         else if (msg.path == "metric/net") {
             id = FUKURO.MONITORING.NET.TOGGLE.Realtime
         }
-        if (id){
-            if(msg.data == 1){
+        if (id) {
+            if (msg.data == 1) {
                 this.#metric.push(id)
-            }else{
-                console.log('dalam',this.#metric,id)
-                this.#metric = this.#metric.filter(e=> e !== id)
+            } else {
+                console.log('dalam', this.#metric, id)
+                this.#metric = this.#metric.filter(e => e !== id)
             }
-            console.log('cur',this.#metric)
+            console.log('cur', this.#metric)
             this.#connectedAgent.toggleRealtime()
         }
 
     }
 
-    #processCommand(cmd){
-        console.log('start cmd',cmd)
-        this.#connectedAgent.executeCommand(cmd.data,this.#directory,cmd.isTool).then((result)=>{
-            console.log('command result',result) 
-            if(result && result.startsWith('Changed directory to: ')){
-                console.log('ubah',result)
-                this.#directory = result.slice(result.lastIndexOf(':') + 1).trim() 
+    async  #processCommand(cmd) {
+        console.log('start cmd', cmd)
+        this.#connectedAgent.executeCommand(cmd.data, this.#directory, cmd.isTool).then((result) => {
+            console.log('command result', result)
+            if (result && result.startsWith('Changed directory to: ')) {
+                console.log('ubah', result)
+                this.#directory = result.slice(result.lastIndexOf(':') + 1).trim()
             }
             this.send({
-                path:'command/result',
-                dir:this.#directory,
+                path: 'command/result',
+                dir: this.#directory,
                 data: result
             })
-        }).catch((err)=>{
-            console.log('command error',err)
+        }).catch((err) => {
+            console.log('command error', err)
         })
 
     }
