@@ -1,5 +1,6 @@
 
-const db = require("../Controller/Database")
+const db = require("../Controller/Database") 
+const NodeConfig = require("./NodeConfig")
 
 module.exports = class NodeDir {
     pathId
@@ -38,7 +39,8 @@ module.exports = class NodeDir {
         }
         else if (access == false && access2.length != 0) {
             //nk buang access dan mmg 2nd party ada access
-            return   NodeDir.removeAccessUser(userId,nodeId)
+            await   NodeDir.removeAccessUser(userId,nodeId)
+            return NodeConfig.clearNotification(nodeId,userId)
 
         }
 

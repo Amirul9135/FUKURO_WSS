@@ -45,9 +45,11 @@ module.exports = class User {
     }
 
     // keys is array of string
-    static findUser(nodeId, keys,access = false) {
+    static findUser(nodeId, keys,access = false,userId=-1) {
         let keystring = "";
-        let first = true
+        let first = true 
+        if(keys){
+            
         keys.forEach(k => {
             if(first){
                 first = false;
@@ -59,15 +61,16 @@ module.exports = class User {
                 + " OR u.email LIKE " + db.escape("%" + k + "%") 
                 + " OR u.phone LIKE " + db.escape("%" + k + "%") +" ) "
         });  
+        }
         let sql = "SELECT q.userId,q.name,q.email,q.phone FROM "
-            + " (SELECT  u.userId,u.name,u.email,u.phone,nd.nodeId FROM user u "
+            + " (SELECT  u.userId,u.name,u.email,u.phone,MAX(nd.nodeId) as nodeId FROM user u "
             + " LEFT JOIN node_dir_access nda ON u.userId = nda.userId "
-            + " LEFT JOIN node_dir nd ON nd.pathId = nda.pathId  AND nd.nodeId =" + db.escape(nodeId);
+            + " LEFT JOIN node_dir nd ON nd.pathId = nda.pathId  AND nd.nodeId =" + db.escape(nodeId) 
             console.log(sql)
             if (keystring.length > 0){
-                sql += " WHERE " + keystring ;
+                sql += " WHERE  " + keystring ;
             } 
-            sql += " GROUP by  u.userId) q WHERE q.nodeId IS " +((access)? "NOT":"") + " NULL"
+            sql += " GROUP by  u.userId) q WHERE q.userId !=" +db.escape(userId)+ " AND q.nodeId IS " +((access == false)? "":"NOT") + " NULL"
         return db.query(sql );
 
     }

@@ -27,15 +27,15 @@ class UserAPI extends RESTController {
     #findUser(){
         return [
             (req,res)=>{ 
-
                 if(!req.params.nodeId){
                     return res.status(400).send({message:"No node id specified"})
+                } 
+                let keys = []
+                if(req.query.k){
+                    keys= [req.query.k]
                 }
-                let keys =[ req.query.k]
-                if(!keys){
-                    keys = []
-                }
-                User.findUser(req.params.nodeId,keys,req.query.access).then((result)=>{
+                console.log(req.query.k)
+                User.findUser(req.params.nodeId,keys,req.query.access,req.user.id).then((result)=>{
                     return res.status(200).send(result)
                 }).catch((err)=>{
                     return res.status(500).send({message:err.message})

@@ -160,5 +160,11 @@ class NodeConfig {
         + " WHERE nodeId="+ db.escape(nodeId)   + " AND name=" + db.escape(dname)
         return db.query(strSql)
     }
+
+    static async clearNotification(nodeId,userId){
+        let sql = "DELETE FROM notification_config WHERE nodeId="+db.escape(nodeId)+" AND userId="+db.escape(userId)
+        return db.query(sql)
+
+    }
 } 
 module.exports = NodeConfig
