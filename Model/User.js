@@ -11,8 +11,8 @@ module.exports = class User {
     deactivated
 
     async register() {
-        let strSql = "INSERT INTO user(name,username,password,email,phone,pin) VALUES "
-            + "(:name:,:username:,:password:,:email:,:phone:,:pin:)"
+        let strSql = "INSERT INTO user(name,username,password,email,phone) VALUES "
+            + "(:name:,:username:,:password:,:email:,:phone:)"
         let result = await db.queryParams(strSql, this)
         return result
 

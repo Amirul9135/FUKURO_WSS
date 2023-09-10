@@ -49,18 +49,15 @@ class UserAPI extends RESTController {
             this._validator.checkString("username",{ min: 6 }, "username must be at least 6 character"),
             this._validator.checkString("email", "email required"),
             this._validator.checkString("password", { min: 6 }, "password must be at least 6 character"),
-            this._validator.checkString("phone", { min: 10, max: 11 }),
-            this._validator.checkString("pin", { min: 6, max: 6 }),
+            this._validator.checkString("phone", { min: 10, max: 11 }), 
             this._validator.validate(),
             async function (req, res) {
                 var reguser = new User(req.body)
                 var salt = await bcrypt.genSalt(10)
                 var hashed = await bcrypt.hash(reguser.password, salt)
-                salt = await bcrypt.genSalt(10)
-                var hashedPin = await bcrypt.hash(reguser.pin, salt)
+                salt = await bcrypt.genSalt(10) 
 
-                reguser.password = hashed
-                reguser.pin = hashedPin
+                reguser.password = hashed 
                 reguser.register().then(function (value) {
                     return res.status(200).send({ message: "registered" })
                 }).catch(function (err) {
