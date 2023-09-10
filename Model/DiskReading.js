@@ -31,7 +31,7 @@ module.exports = class DiskReading {
             + "   COALESCE(AVG(d.utilization), 0) AS utilization, "
             + "   COALESCE(AVG(d.readSpeed), 0) AS readSpeed, "
             + "   COALESCE(AVG(d.writeSpeed), 0) AS writeSpeed, "
-            + "   Intervals.end_interval  AS interval_group " 
+            + "   intervals.end_interval  AS interval_group " 
             + " FROM "
             + "   intervals "
             + " LEFT JOIN disk_usage d ON d.nodeId = " + db.escape(nodeId)  

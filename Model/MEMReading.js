@@ -37,7 +37,7 @@ module.exports = class MEMReading {
             + "   COALESCE(AVG(m.used), 0) AS used, "
             + "   COALESCE(AVG(m.cached), 0) AS cached, "
             + "   COALESCE(AVG(m.buffer), 0) AS buffer, "
-            + "   Intervals.end_interval  AS interval_group "
+            + "   intervals.end_interval  AS interval_group "
             + " FROM "
             + "   intervals "
             + " LEFT JOIN memory_usage m ON m.nodeId = " + db.escape(nodeId)  

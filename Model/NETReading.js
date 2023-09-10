@@ -39,7 +39,7 @@ module.exports = class NETReading {
             + "   COALESCE(AVG(n.tkByte), 0) AS tkByte, "
             + "   COALESCE(AVG(n.tError), 0) AS tError, "
             + "   COALESCE(AVG(n.tDrop), 0) AS tDrop, "
-            + "   Intervals.end_interval  AS interval_group "
+            + "   intervals.end_interval  AS interval_group "
             + " FROM "
             + "   intervals "
             + " LEFT JOIN network_usage n ON n.nodeId = " + db.escape(nodeId)  
