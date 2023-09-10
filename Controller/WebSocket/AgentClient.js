@@ -49,6 +49,25 @@ class AgentClient extends WsClient {
     async _onOpen() {
         console.log("Agent on " + this.#node.name + " connected")
         // logging information here
+        Node_.findAllAssociatedUser(this.#node.nodeId).then((result)=>{ 
+            if(result.length > 0){
+                let ids = [];
+                result.forEach((i)=>{
+                    ids.push(i["userId"].toString())
+                });
+                this.#oneSignal.sendNotification(ids,"Agent " + this.#node.name
+                 + " Online","Agent application connected with FUKURO server",
+                 {dateTime:new Date().toISOString()})
+            }
+        }).catch((err)=>{
+            console.log("agent client handler error "  +err)
+        })
+
+        // send noti via onesignal
+        this.#connectedApps.forEach(app => {
+            app.send({ error: 'agent offline' })
+            app.close()
+        })
     }
 
     async _onClose() {
