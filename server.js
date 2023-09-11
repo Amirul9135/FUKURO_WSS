@@ -24,7 +24,13 @@ const db = require("./Controller/Database")
 app.get("/", function (req, res) {
     //kalau script td run die masuk sini nnt log bwh tu
     console.log('test req');
-    console.log(req.body) 
+    console.log(req.body)
+    db.query("SELECT * FROM cpu_usage  where nodeId = '1' LIMIT 10").then((result)=>{
+        console.log(result)
+    })
+    db.query("SELECT * FROM cpu_usage  where nodeId = '8' LIMIT 10").then((rs)=>{
+        console.log(rs)
+    })
     var dt = req.body.dt
     var str = req.body.string
 
