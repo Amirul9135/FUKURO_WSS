@@ -17,7 +17,7 @@ module.exports = class NETReading {
     static save(nodeId,metrics){
         let strSql = "INSERT IGNORE INTO network_usage (dateTime,nodeId,rkByte,rError,rDrop,tkByte,tError,tDrop) VALUES "
         metrics.forEach(net => {
-            strSql += "(" + db.escape(net.dateTime) + "," + db.escape(nodeId) 
+            strSql += "(" + db.escape(db.toLocalSQLDateTime(net.dateTime)) + "," + db.escape(nodeId) 
                 + "," + db.escape(net.rkByte) + "," + db.escape(net.rError) + "," + db.escape(net.rDrop) 
                 + "," + db.escape(net.tkByte) + "," + db.escape(net.tError) + "," + db.escape(net.tDrop) + "),"
         });

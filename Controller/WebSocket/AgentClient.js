@@ -5,8 +5,7 @@ const MetricController = require("../MetricController")
 const FUKURO = require("../../FUKURO")
 const NodeConfig = require("../../Model/NodeConfig")
 const Node_ = require("../../Model/Node_")
-const AGENT = FUKURO.AGENT
-
+const AGENT = FUKURO.AGENT 
 class AgentClient extends WsClient {
     #node //node object reference
     #connectedApps = [] //list of connected AppClient

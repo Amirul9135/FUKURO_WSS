@@ -3,6 +3,7 @@
 //basically dictionary of hardcodded value in this system
 // for toggles except realtime. if record does not exist in db means active, if there is record in config then its disabled
 class FUKURO {
+
     static CONFIGURE(obj) {
         FUKURO.AGENT.PATH[String(obj.id)] = obj.path
         FUKURO.AGENT.DEFAULT.VAL[String(obj.id)] = obj.defVal

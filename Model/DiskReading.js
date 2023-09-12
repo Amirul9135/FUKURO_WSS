@@ -15,7 +15,7 @@ module.exports = class DiskReading {
     static save(nodeId,metrics){
         let strSql = "INSERT IGNORE INTO disk_usage (dateTime,nodeId,name,utilization,readSpeed,writeSpeed) VALUES "
         metrics.forEach(dsk => {
-            strSql += "(" + db.escape(dsk.dateTime) + "," + db.escape(nodeId) + "," + db.escape(dsk.name)
+            strSql += "(" + db.escape(db.toLocalSQLDateTime(dsk.dateTime)) + "," + db.escape(nodeId) + "," + db.escape(dsk.name)
                 + "," + db.escape(dsk.utilization) + "," + db.escape(dsk.readSpeed) + "," + db.escape(dsk.writeSpeed) + "),"
         });
         strSql = strSql.substring(0, strSql.length - 1) + " ON DUPLICATE KEY UPDATE "

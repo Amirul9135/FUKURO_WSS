@@ -1,5 +1,4 @@
-const express = require('express');
-const path = require('path');
+const express = require('express'); 
 const app = express();
 const UserAPI = require("./Controller/REST/UserAPI")
 const NodeAPI = require("./Controller/REST/NodeAPI")
@@ -19,23 +18,16 @@ app.get("/api/test", (req, res) => {
     return res.send(new Date().toDateString())
 })
 
-
-const db = require("./Controller/Database")
+ 
 app.get("/", function (req, res) {
     //kalau script td run die masuk sini nnt log bwh tu
     console.log('test req');
-    console.log(req.body)
-    db.query("SELECT * FROM cpu_usage  where nodeId = '1' LIMIT 10").then((result)=>{
-        console.log(result)
-    })
-    db.query("SELECT * FROM cpu_usage  where nodeId = '8' LIMIT 10").then((rs)=>{
-        console.log(rs)
-    })
+    console.log(req.body) 
     var dt = req.body.dt
     var str = req.body.string
 
     console.log(Date(dt))
     console.log(Date(str))
     return res.status(200).send("test");
-})
+})  
 module.exports = app; 

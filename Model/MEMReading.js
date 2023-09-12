@@ -14,7 +14,7 @@ module.exports = class MEMReading {
     static save(nodeId,metrics){
         let strSql = "INSERT IGNORE INTO memory_usage (dateTime,nodeId,used,cached,buffer) VALUES "
         metrics.forEach(mem => {
-            strSql += "(" + db.escape(mem.dateTime) + "," + db.escape(nodeId) 
+            strSql += "(" + db.escape(db.toLocalSQLDateTime(mem.dateTime)) + "," + db.escape(nodeId) 
                 + "," + db.escape(mem.used) + "," + db.escape(mem.cached) + "," + db.escape(mem.buffer) + "),"
         });
         strSql = strSql.substring(0, strSql.length - 1)  + " ON DUPLICATE KEY UPDATE "

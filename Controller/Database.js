@@ -77,6 +77,17 @@ class Database {
     close() {
         this.pool.end();
     } 
+
+    
+    // pass date to be converted to local timezone
+    // @param = date in string
+    // @return = string of date in yyyy-mm-dd HH:mm:ss format
+    toLocalSQLDateTime(strDate){ 
+        let dto = new Date(strDate)
+  
+        return dto.toLocaleDateString('en-CA').replace(',','') + " " + dto.toLocaleTimeString('en-CA', {hour12:false});    
+    }
+
 }
 
 // Singleton pattern

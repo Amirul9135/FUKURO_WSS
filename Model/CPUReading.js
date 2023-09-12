@@ -14,7 +14,7 @@ module.exports = class CPUReading {
     static save(nodeId,metrics){
         let strSql = "INSERT INTO cpu_usage (dateTime,nodeId,system,user,interrupt) VALUES "
         metrics.forEach(cpu => {
-            strSql += "(" + db.escape(cpu.dateTime) + "," + db.escape(nodeId) 
+            strSql += "(" + db.escape(db.toLocalSQLDateTime(cpu.dateTime)) + "," + db.escape(nodeId) 
                 + "," + db.escape(cpu.system) + "," + db.escape(cpu.user) + "," + db.escape(cpu.interrupt) + "),"
         });
         strSql = strSql.substring(0, strSql.length - 1) + " ON DUPLICATE KEY UPDATE "

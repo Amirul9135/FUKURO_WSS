@@ -23,9 +23,9 @@ class MetricController{
 
     static fetchHistoricalData(resId,nodeId,interval,sDate,enDate,diskonly){
         console.log(sDate)
-        let start =  (sDate == null)? " NOW() ": db.escape(sDate)
+        let start =  (sDate == null)? " NOW() ": db.escape(db.toLocalSQLDateTime(sDate))
         console.log(start)
-        let end  = (enDate == null)? " NOW() ": db.escape(enDate) 
+        let end  = (enDate == null)? " NOW() ": db.escape(db.toLocalSQLDateTime(enDate)) 
         interval = db.escape(interval);
         let sql = "WITH RECURSIVE intervals AS ( "
             + " SELECT  " 
