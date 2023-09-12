@@ -6,6 +6,8 @@ const FUKURO = require("../../FUKURO")
 const NodeConfig = require("../../Model/NodeConfig")
 const Node_ = require("../../Model/Node_")
 const AGENT = FUKURO.AGENT 
+
+
 class AgentClient extends WsClient {
     #node //node object reference
     #connectedApps = [] //list of connected AppClient
@@ -247,25 +249,25 @@ class AgentClient extends WsClient {
             id = FUKURO.MONITORING.CPU.ALERT.Threshold
             val = reading.data.total
             title = this.#node.name + " CPU Usage reaches " + val.toFixed(2) + " (%)"
-            msg = "CPU usage reaches treshold on " + reading.data.dateTime
+            msg = "CPU usage reaches treshold " 
         }
         if (reading.path == 'alert/mem') {
             id = FUKURO.MONITORING.MEM.ALERT.Threshold
             val = reading.data.used
             title = this.#node.name + " Memory Usage reaches " + val.toFixed(2) + " (%)"
-            msg = "Memory usage reaches treshold on " + reading.data.dateTime
+            msg = "Memory usage reaches treshold "
         }
         if (reading.path == 'alert/net') {
             id = FUKURO.MONITORING.NET.ALERT.Threshold
             val = reading.data.rkByte
             title = this.#node.name + " Received Network Usage reaches " + val.toFixed(2) + " KB"
-            msg = "Received Network Usage reaches treshold on " + reading.data.dateTime
+            msg = "Received Network Usage reaches treshold " 
         }
         if (reading.path == 'alert/dsk') {
             id = FUKURO.MONITORING.DSK.ALERT.Threshold
             val = reading.data.utilization
             title = this.#node.name + " Disk Utilization reaches " + val.toFixed(2) + " (%)"
-            msg = "Disk Utilization reaches treshold on " + reading.data.dateTime
+            msg = "Disk Utilization reaches treshold " 
         }
         Node_.findUserByThreshold(this.#node.nodeId,id,val).then((result)=>{
             if(result.length > 0){
