@@ -1,5 +1,6 @@
 
 const db = require("../Controller/Database")
+const NodeConfig = require("./NodeConfig")
 
 module.exports = class Node_ {
     nodeId
@@ -44,6 +45,56 @@ module.exports = class Node_ {
             throw new Error("User have no access to node or the node doesn't exist") 
     }
     
+    //role  1= admin, 2-collaborator, 3-guest
+    static async grantAccess(granter, userId,nodeId,role){
+        if(! await Node_.isAdmin(granter,nodeId)){ 
+            throw Error("Unauthorized, only admin user can manage others' access")
+        } 
+        return db.query("INSERT INTO node_access(nodeId,userId,accessId) VALUES(" 
+        + db.escape(nodeId) + "," + db.escape(userId) + "," + db.escape(role) 
+        + ")  ON DUPLICATE KEY UPDATE accessId = VALUES(accessId)")
+    }
+    static async grantAccessToCreator(userId,nodeId){
+        return db.query("INSERT INTO node_access(nodeId,userId,accessId) VALUES(" 
+        + db.escape(nodeId) + "," + db.escape(userId) + "," + db.escape(1) 
+        + ")  ON DUPLICATE KEY UPDATE accessId = VALUES(accessId)")
+    }
+
+    static async getAccess(userId,nodeId){
+        let sql = "SELECT accessId FROM node_access WHERE userId=" + db.escape(userId) + " AND nodeId=" + db.escape(nodeId)
+        let result = await db.query(sql)
+        if(result){
+            result = result[0]
+        }
+        return result;
+    }
+
+    static async isAdmin(userId,nodeId){
+        let access = await Node_.getAccess(userId,nodeId)
+        console.log('isadmin',access)
+        if(access && access['accessId'] == 1){
+            return true;
+        }else{
+            return false;
+        }
+    } 
+
+    static async removeAccess(granter,userId,nodeId){
+        console.log('nid',nodeId)
+        if(! await Node_.isAdmin(granter,nodeId)){ 
+            throw Error("Unauthorized, only admin user can manage others' access")
+        } 
+        console.log('nid',nodeId)
+        //remove dari access
+        let sql = "DELETE FROM node_access WHERE userId=" + db.escape(userId) + " AND nodeId=" + db.escape(nodeId)
+
+        let res = await db.query(sql)
+        if(res){
+            //clear threhold    
+           await db.query("DELETE FROM notification_config WHERE nodeId="+db.escape(nodeId)+" AND userId="+db.escape(userId))
+        }
+        return res;
+    }
 
     static findUserAccessibleNodes(userId) {
         var strSQL = "SELECT n.nodeId,n.name,n.description FROM node n JOIN node_dir d ON n.nodeId=d.nodeId JOIN node_dir_access a ON a.pathId=d.pathId"
@@ -61,22 +112,8 @@ module.exports = class Node_ {
         let sql = "SELECT DISTINCT userId FROM notification_config WHERE notId = " + db.escape(notId)
             + " AND nodeId = " +db.escape(nodeId)+ " AND value <= " + db.escape(value)
         return db.query(sql);
-    }
-/* not here
-    static findUserToNotify(userId, resourceType) {
-        var strSql = "SELECT userId FROM user_notification WHERE nodeId=" + db.escape(userId) + " AND resourceType=" + db.escape(resourceType)
-        return new Promise(function (resolve, reject) {
-            db.query(strSql, function (err, result) {
-                if (err) {
-                    return reject(err)
-                }
-                else {
-                    result = JSON.parse(JSON.stringify(result))
-                    return resolve(result)
-                }
-            })
-        })
-    }*/
+    } 
+
 
     constructor(jObj = null) {
         if (jObj != null) {

@@ -19,7 +19,53 @@ class NodeAPI extends RESTController {
     this._router.get("/:nodeId/info",this.#getSpec())
     this._router.post("/:nodeId/grant/:userId",this.#toggleAccess(true))
     this._router.delete("/:nodeId/grant/:userId",this.#toggleAccess(false))
+
+    this._router.post("/:nodeId/access/admin/:userId",this.#grantAccess(1))
+    this._router.post("/:nodeId/access/collaborator/:userId",this.#grantAccess(2))
+    this._router.post("/:nodeId/access/guest/:userId",this.#grantAccess(3))
+    this._router.delete("/:nodeId/access/:userId",this.#removeAccess())
   }
+  #grantAccess(role){
+    return [
+      this._auth.authRequest(),
+      (req,res)=>{
+        try{
+          parseInt(req.params.nodeId)
+          parseInt(req.params.userId)
+        }
+        catch(e){
+          return res.status(400).send({message:"Invalid node id or user id"})
+        }
+        Node_.grantAccess(req.user.id,req.params.userId,req.params.nodeId,role).then((result)=>{
+          return res.status(200).send()
+        }).catch((error)=>{
+          return res.status(500).send({"message":error.message})
+        })
+      }
+    ]
+  }
+  #removeAccess(){  
+    return [
+      this._auth.authRequest(),
+      (req,res)=>{
+        try{
+          parseInt(req.params.nodeId)
+          parseInt(req.params.userId)
+        }
+        catch(e){
+          return res.status(400).send({message:"Invalid node id or user id"})
+        }
+        Node_.removeAccess(req.user.id,req.params.userId,req.params.nodeId).then((result)=>{
+          return res.status(200).send()
+        }).catch((error)=>{
+          return res.status(500).send({"message":error.message})
+        })
+        
+      }
+    ]
+  } 
+
+  //old
   #toggleAccess(access){
     return [
       this._auth.authRequest(),
@@ -98,31 +144,17 @@ class NodeAPI extends RESTController {
             .status(500)
             .send({ message: "failed to register node" });
 
-        var newDir = new NodeDir({
-          nodeId: newNode.nodeId,
-          path: "/",
-          label: "root",
-        });
-        await newDir.register()
-        console.log('after reg', newDir)
-        if (!newDir.pathId)
-          return res
-            .status(500)
-            .send({
-              message: "failed to register node default root directory"
-            });
+        // grant admin access
+        Node_.grantAccessToCreator(req.user.id,newNode.nodeId).then((result)=>{
+          return res.status(200).send({ message: "registered" });
 
-        NodeDir.grantAccess(newDir.pathId, req.user.id)
-          .then(function (result) {
-            return res.status(200).send({ message: "registered" });
-          })
-          .catch(function (err) {
-            return res
-              .status(500)
-              .send({
-                message: "failed to grant user access to default directory root",
-              });
+        }).catch((error)=>{
+          return res
+          .status(500)
+          .send({
+            message: error.message,
           });
+        }) 
       }
     ]
   }
