@@ -4,6 +4,7 @@ const FUKURO = require("../../FUKURO") //static class for config id reference
 const CONFIG = FUKURO.MONITORING
 const NodeConfig = require("../../Model/NodeConfig")
 const WsCache = require("../WebSocket/WsClientCache")
+const Node_ = require("../../Model/Node_")
 
 class ConfigAPI extends RESTController {
     #cache
@@ -25,10 +26,10 @@ class ConfigAPI extends RESTController {
         ])])
         this._router.post("/:nodeId/push", [this.#checkParam(), this.#updateConfigurations([
             CONFIG.PUSH.Interval
-        ])])
+        ], "Push")])
 
-        this._router.post("/:nodeId/push/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.PUSH.Toggle, true)])
-        this._router.delete("/:nodeId/push/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.PUSH.Toggle, false)])
+        this._router.post("/:nodeId/push/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.PUSH.Toggle, true,"Push Metric")])
+        this._router.delete("/:nodeId/push/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.PUSH.Toggle, false,"Push Metric")])
         /**** END PUSH metric configuration routes END ****/
 
 
@@ -49,11 +50,11 @@ class ConfigAPI extends RESTController {
             CONFIG.CPU.INTERVAL.Realtime,
             CONFIG.CPU.ALERT.Tick,
             CONFIG.CPU.ALERT.Cooldown
-        ])])
+        ],"CPU Monitoring")])
 
         //toggle
-        this._router.post("/:nodeId/monitoring/cpu/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.CPU.TOGGLE.Extract, true)])
-        this._router.delete("/:nodeId/monitoring/cpu/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.CPU.TOGGLE.Extract, false)])
+        this._router.post("/:nodeId/monitoring/cpu/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.CPU.TOGGLE.Extract, true,"CPU Monitoring")])
+        this._router.delete("/:nodeId/monitoring/cpu/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.CPU.TOGGLE.Extract, false,"CPU Monitoring")])
 
         //notification
         this._router.post("/:nodeId/alert/cpu", [this.#checkParam(true), this.#enableNotification(CONFIG.CPU.ALERT.Threshold)])
@@ -79,11 +80,11 @@ class ConfigAPI extends RESTController {
             CONFIG.MEM.INTERVAL.Realtime,
             CONFIG.MEM.ALERT.Tick,
             CONFIG.MEM.ALERT.Cooldown
-        ])])
+        ],"Memory Monitoring")])
 
         //toggle
-        this._router.post("/:nodeId/monitoring/mem/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.MEM.TOGGLE.Extract, true)])
-        this._router.delete("/:nodeId/monitoring/mem/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.MEM.TOGGLE.Extract, false)])
+        this._router.post("/:nodeId/monitoring/mem/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.MEM.TOGGLE.Extract, true,"Memory Monitoring")])
+        this._router.delete("/:nodeId/monitoring/mem/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.MEM.TOGGLE.Extract, false,"Memory Monitoring")])
 
         //notification
         this._router.post("/:nodeId/alert/mem", [this.#checkParam(true), this.#enableNotification(CONFIG.MEM.ALERT.Threshold)])
@@ -108,11 +109,11 @@ class ConfigAPI extends RESTController {
             CONFIG.NET.INTERVAL.Realtime,
             CONFIG.NET.ALERT.Tick,
             CONFIG.NET.ALERT.Cooldown
-        ])])
+        ],"Network Monitoring")])
 
         //toggle
-        this._router.post("/:nodeId/monitoring/net/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.NET.TOGGLE.Extract, true)])
-        this._router.delete("/:nodeId/monitoring/net/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.NET.TOGGLE.Extract, false)])
+        this._router.post("/:nodeId/monitoring/net/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.NET.TOGGLE.Extract, true,"Network Monitoring")])
+        this._router.delete("/:nodeId/monitoring/net/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.NET.TOGGLE.Extract, false,"Network Monitoring")])
 
         //notification
         this._router.post("/:nodeId/alert/net", [this.#checkParam(true), this.#enableNotification(CONFIG.NET.ALERT.Threshold)])
@@ -137,11 +138,11 @@ class ConfigAPI extends RESTController {
             CONFIG.DSK.INTERVAL.Realtime,
             CONFIG.DSK.ALERT.Tick,
             CONFIG.DSK.ALERT.Cooldown
-        ])])
+        ],"Disk Monitoring")])
 
         //toggle
-        this._router.post("/:nodeId/monitoring/disk/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.DSK.TOGGLE.Extract, true)])
-        this._router.delete("/:nodeId/monitoring/disk/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.DSK.TOGGLE.Extract, false)])
+        this._router.post("/:nodeId/monitoring/disk/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.DSK.TOGGLE.Extract, true,"Disk Monitoring")])
+        this._router.delete("/:nodeId/monitoring/disk/toggle", [this.#checkParam(), this.#toggleConfig(CONFIG.DSK.TOGGLE.Extract, false,"Disk Monitoring")])
 
         //notification
         this._router.post("/:nodeId/alert/disk", [this.#checkParam(true), this.#enableNotification(CONFIG.DSK.ALERT.Threshold)])
@@ -172,6 +173,7 @@ class ConfigAPI extends RESTController {
                     if (agent) {//if agent in cahce (online)
                         agent.refreshDisk()
                     }
+                    Node_.logActivity(req.nodeId,"Disk Monitoring Configuration Changed",req.user.id)
                     return res.status(200).send()
                 }
             }).catch((err) => {
@@ -247,14 +249,22 @@ class ConfigAPI extends RESTController {
     }
 
     //configs must be array of the configuration ids [1,2]
-    #updateConfigurations(configs) {
+    #updateConfigurations(configs,configName) {
         return async (req, res) => {
             if (!req.body) {
                 return res.status(400).send({ message: "no data" })
             }
+            
+            let admin = await Node_.isAdmin(req.user.id,req.nodeId).catch((error)=>{
+                return res.status(500).send({message : "Unable to verify access"})
+            })
+            if(!admin){
+                return res.status(401).send({message : "Unauthorized to change configureation"})
+            }
+            
             // validation and determine wether to update or remove(if same with default)
             let updateConf = []
-            let defaultConf = []
+            let defaultConf = [] 
             configs.forEach(conf => {
                 let configName = FUKURO.getName(conf)
                 if (!req.body[configName]) {
@@ -279,7 +289,7 @@ class ConfigAPI extends RESTController {
             });
             let errorMessage = ""
             let toAgent = []
-            let update = NodeConfig.updateConfigs(req.nodeId, req.user.id, updateConf).then((result) => {
+            let update = NodeConfig.updateConfigs(req.nodeId, updateConf).then((result) => {
                 console.log('update success')
                 updateConf.forEach(u => {
                     toAgent.push({ id: u.configId, val: u.val })
@@ -289,7 +299,7 @@ class ConfigAPI extends RESTController {
                     errorMessage += "Failed to Update " + FUKURO.getName(e.configId) + ";"
                 })
             })
-            let del = NodeConfig.removeConfigs(req.nodeId, req.user.id, defaultConf).then((result) => {
+            let del = NodeConfig.removeConfigs(req.nodeId,defaultConf).then((result) => {
                 console.log('del success')
                 defaultConf.forEach(d => {
                     toAgent.push({ id: d, val: FUKURO.getDefaultValue(d) })
@@ -305,7 +315,7 @@ class ConfigAPI extends RESTController {
                 this.#applyChanges(req.nodeId, toAgent)
             }
             if (errorMessage.length == 0) {//no error
-
+                await Node_.logActivity(req.nodeId,configName + " Configuration Changed",req.user.id)
                 return res.status(200).send()
             } else {
                 return res.status(500).send({ message: errorMessage })
@@ -314,15 +324,23 @@ class ConfigAPI extends RESTController {
     }
 
     // toggle configs
-    #toggleConfig(configId, enable) {
-        return async (req, res) => {
+    #toggleConfig(configId, enable,configName) {
+        return async (req, res) => { 
+
+            let admin = await Node_.isAdmin(req.user.id,req.nodeId).catch((error)=>{
+                return res.status(500).send({message:"Unable to verify access"})
+            })
+            if(!admin){
+                return res.status(401).send({message:"Unauthorized to change configureation"})
+            }
             let msg = (enable) ? "Enable" : "Disable"
             // record of toggle in database indicates that the config is disabled
             // thus, insert = disable, remove = enable
-            let operation = (enable) ? NodeConfig.removeConfig(req.nodeId, configId, req.user.id) :
-                NodeConfig.updateConfig(req.nodeId, configId, null, req.user.id)
-            operation.then((result) => {
+            let operation = (enable) ? NodeConfig.removeConfig(req.nodeId, configId) :
+            NodeConfig.updateConfig(req.nodeId, configId, null, req.user.id)
+            operation.then(async(result) => {
                 this.#applyChanges(req.nodeId, [{ id: configId, val: enable }])
+                await Node_.logActivity(req.nodeId, configName +" " + msg + "d",req.user.id)
                 return res.status(200).send()
             }).catch((error) => {
                 return res.status(500).send({ message: "Failed to " + msg, error: error.message })
@@ -330,15 +348,22 @@ class ConfigAPI extends RESTController {
 
         }
     }
+     
 
     //config id parametized so that method can be resused for multiple path (value and node from request object)
     #enableNotification(notId) {
-        return (req, res) => {
+        return async (req, res) => {
             if (req.value < FUKURO.getMin(notId)) {
                 return res.status(400).send({
                     message: "Error :  value=" + req.value
                         + " less than minimum " + FUKURO.getMin(notId)
                 })
+            }
+            var nodeDetail = await Node_.findNode(req.nodeId, req.user.id).catch(function (err) {
+                return res.status(401).send({message:"Cannot enable notification please ensure you have access"}) 
+            })
+            if(!nodeDetail){
+                return res.status(401).send({message:"Cannot enable notification please ensure you have access"}) 
             }
 
             NodeConfig.enableNotification(req.nodeId, notId, req.user.id, req.value).then(async (result) => {

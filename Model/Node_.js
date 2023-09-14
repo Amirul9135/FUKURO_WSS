@@ -19,14 +19,17 @@ module.exports = class Node_ {
     }
 
     async update(userId) {
-        let strSql = " UPDATE node n JOIN node_dir nd ON n.nodeId=nd.nodeId "
-                    + " JOIN node_dir_access nda ON nda.pathId=nd.pathId "
-                    + " SET name=:name:,description=:description: " 
-                     + " WHERE n.nodeId=:nodeId: AND nda.userId=" + db.escape(userId)
-        let result = await db.queryParams(strSql, this)
-        if (result)
-            result = result.affectedRows
-        return result
+        if(await Node_.isAdmin(userId,this.nodeId)){
+            let sql = "UPDATE node SET  name=:name:,description=:description: "
+                    +" WHERE nodeId=:nodeId:"
+            let result = await db.queryParams(sql, this)
+            if (result)
+                result = result.affectedRows
+            return result
+        }
+        else{
+            throw Error("Unauthorized to update node details")
+        }  
     }
 
     async loadConfigs() {
@@ -36,9 +39,9 @@ module.exports = class Node_ {
 
     //used to get node detail only if user have access 
     static async findNode(nodeId, userId) {
-        var strSQL = "SELECT n.nodeId,n.name,n.description,n.passKey FROM node n JOIN node_dir d ON n.nodeId=d.nodeId JOIN node_dir_access a ON a.pathId=d.pathId"
-            + " WHERE n.nodeId=" + db.escape(nodeId) + " AND a.userId=" + db.escape(userId)
-        let result = await db.query(strSQL) 
+        let sql = "SELECT n.*,a.accessId FROM node_access a JOIN node n ON n.nodeId=a.nodeId "
+            + " WHERE n.nodeId=" + db.escape(nodeId) + " AND a.userId=" + db.escape(userId) 
+        let result = await db.query(sql) 
         if(result.length !=0)
             return result[0]
         else
@@ -97,14 +100,13 @@ module.exports = class Node_ {
     }
 
     static findUserAccessibleNodes(userId) {
-        var strSQL = "SELECT n.nodeId,n.name,n.description FROM node n JOIN node_dir d ON n.nodeId=d.nodeId JOIN node_dir_access a ON a.pathId=d.pathId"
-            + " WHERE a.userId=" + db.escape(userId) 
-        return db.query(strSQL)
+        let sql = "SELECT n.nodeId,n.name,n.description,a.accessId FROM node n JOIN node_access a ON a.nodeId = n.nodeId "
+            + " WHERE a.userId=" + db.escape(userId)  
+        return db.query(sql)
     }
 
     static findAllAssociatedUser(nodeId){
-        let sql = "SELECT DISTINCT u.userId FROM user u join node_dir_access nda ON nda.userId = u.userId JOIN node_dir nd ON nd.pathId = nda.pathId "
-            " WHERE nd.nodeId = " + db.escape(nodeId)
+        let sql = "SELECT DISTINCT userId FROM node_access WHERE nodeId="+ db.escape(nodeId) 
         return db.query(sql);
     }
 
@@ -114,6 +116,16 @@ module.exports = class Node_ {
         return db.query(sql);
     } 
 
+    static logActivity(nodeId,desc,userId){
+        let sql ="INSERT INTO node_log (nodeId,log,userId) VALUES "
+            + " (" + db.escape(nodeId) + "," + db.escape(desc) + "," + db.escape(userId) + ") "
+        return db.query(sql)
+    }
+
+    static nodeLogFrom(nodeId,dateFrom){
+        let sql = "SELECT * FROM node_log WHERE nodeId=" + db.escape(nodeId) + " AND dateTime >= " + db.escape(db.toLocalSQLDateTime(dateFrom))
+        return db.query(sql)
+    }
 
     constructor(jObj = null) {
         if (jObj != null) {

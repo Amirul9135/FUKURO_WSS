@@ -22,6 +22,8 @@ class AgentClient extends WsClient {
         this.#cmd = {}
         console.log('agent connected', node)
         
+
+        Node_.logActivity(this.#node.nodeId,"Agent Connected to server")
         Node_.findAllAssociatedUser(this.#node.nodeId).then((result)=>{ 
             if(result.length > 0){
                 let ids = [];
@@ -77,6 +79,7 @@ class AgentClient extends WsClient {
         // logging onformation
 
         // get list of user for down notification
+        Node_.logActivity(this.#node.nodeId,"Agent Disconnected from server")
         Node_.findAllAssociatedUser(this.#node.nodeId).then((result)=>{ 
             if(result.length > 0){
                 let ids = [];
@@ -346,7 +349,7 @@ class AgentClient extends WsClient {
         this.send(JSON.stringify(msg))
     }
 
-     executeCommand(cmd, dir, isTool) {
+     executeCommand(cmd, dir, isTool,uid) {
         let id = AgentClient.genCMDID()
         while (id in this.#cmd) {
             id = AgentClient.genCMDID()
@@ -363,6 +366,7 @@ class AgentClient extends WsClient {
             msg.data['isTool'] = true
         }
         this.send(JSON.stringify(msg))
+        Node_.logActivity(this.#node.nodeId,"Execute Command : " + cmd.trim(),uid)
         return new Promise((resolve, reject) => {
             this.#cmd[id] = resolve
         })

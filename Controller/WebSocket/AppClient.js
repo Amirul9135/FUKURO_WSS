@@ -89,7 +89,7 @@ class AppClient extends WsClient {
 
     async  #processCommand(cmd) {
         console.log('start cmd', cmd)
-        this.#connectedAgent.executeCommand(cmd.data, this.#directory, cmd.isTool).then((result) => {
+        this.#connectedAgent.executeCommand(cmd.data, this.#directory, cmd.isTool,this.#user.id).then((result) => {
             console.log('command result', result)
             if (result && result.startsWith('Changed directory to: ')) {
                 console.log('ubah', result)

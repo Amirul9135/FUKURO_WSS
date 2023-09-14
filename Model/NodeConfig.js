@@ -4,8 +4,7 @@ class NodeConfig {
 
     static updateConfig(nodeId, configId, value, userId) {
         var strSql = "INSERT INTO node_config (nodeId, configId, value) "
-            + " SELECT  " + db.escape(nodeId) + ", " + db.escape(configId) + ", " + db.escape(value)
-            + " FROM node_dir_access nda JOIN node_dir nd ON nda.pathId=nd.pathId WHERE nda.userId=" + db.escape(userId) + " LIMIT 1 "
+            + " VALUES ("+ db.escape(nodeId) + ", " + db.escape(configId) + ", " + db.escape(value) +")"  
             + " ON DUPLICATE KEY UPDATE value = VALUES(value)"
         return db.query(strSql)
     }
@@ -15,9 +14,8 @@ class NodeConfig {
     // nodeId
     // userId to check user has authority
     // configurations must be array of object {configId:0,val:numericalvalue}
-    static async updateConfigs(nodeId, userId, configurations) {
-        // check access
-        await Node_.findNode(nodeId, userId) // ensure user have connection with node being configured
+    static async updateConfigs(nodeId, configurations) { 
+
         let strSql = "INSERT INTO node_config (nodeId,configId,value) VALUES "
         configurations.forEach(conf => {
             strSql += " (" + db.escape(nodeId) + "," + db.escape(conf.configId) + "," + db.escape(conf.val) + "),"
@@ -32,11 +30,10 @@ class NodeConfig {
     // nodeId
     // userId to check user has authority
     // configurations must be array of id [1,1,2,3] etc
-    static async removeConfigs(nodeId, userId, configurations) {
+    static async removeConfigs(nodeId, configurations) {
         if (configurations.length < 1) {
             return
-        }
-        await Node_.findNode(nodeId, userId)  // ensure user have connection with node being configured
+        }    
         let strSql = "DELETE FROM node_config WHERE nodeId=" + db.escape(nodeId) + " AND configId IN ("
         configurations.forEach(conf => {
             strSql += db.escape(conf) + ","
@@ -45,20 +42,16 @@ class NodeConfig {
         return db.query(strSql)
     }
 
-    static removeConfig(nodeId, configId, userId) {
-        var strSQL = "DELETE nc FROM node_config nc "
-            + " JOIN node_dir nd ON nd.nodeId=nc.nodeId JOIN node_dir_access nda ON nda.pathId=nd.pathId"
-            + " WHERE nc.nodeId=" + db.escape(nodeId) + " AND nc.configId=" + db.escape(configId) + " AND nda.userId=" + db.escape(userId)
-        return db.query(strSQL)
+    static removeConfig(nodeId, configId) {
+        let sql = "DELETE FROM node_config WHERE nodeId="+ db.escape(nodeId) +" AND configId="+ db.escape(configId) 
+        return db.query(sql)
     }
 
     static enableNotification(nodeId, notId, userId, value) {
-        var strSql = "INSERT INTO notification_config (nodeId, notId, userId,value) "
-            + " SELECT  " + db.escape(nodeId) + ", " + db.escape(notId) + ", " + db.escape(userId) + "," + db.escape(value)
-            + " FROM node_dir_access nda JOIN node_dir nd ON nda.pathId=nd.pathId WHERE nda.userId=" + db.escape(userId) + " LIMIT 1 "
-            + " ON DUPLICATE KEY UPDATE value = VALUES(value) "
-        return db.query(strSql)
-
+        let sql = "INSERT INTO notification_config (nodeId,notId,userId,value) "
+            + " VALUES(" + db.escape(nodeId) + "," + db.escape(notId) + "," + db.escape(userId) + "," + db.escape(value)+ ") "
+            + " ON DUPLICATE KEY UPDATE value = VALUES(value) " 
+        return db.query(sql)
     }
 
     static disableNotification(nodeId, notId, userId) {

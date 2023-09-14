@@ -61,8 +61,17 @@ class ConnectionHandler {
                     ws.send(JSON.stringify({ error: "Unable to connect: cannot find node, please ensure you have access"  }))
                     ws.close()
                 })
-                if (!nodeDetail)
+                console.log("node detail",nodeDetail)
+                if (!nodeDetail ){
+                    ws.send(JSON.stringify({ error: "Unable to connect: cannot find node, please ensure you have access"  }))
+                    ws.close()
                     return
+                }
+                if(nodeDetail.accessId != 1){ //not admin 
+                    ws.send(JSON.stringify({ error: "Unable to connect: Unauthorized, only admin may start monitoring"  }))
+                    ws.close()
+                    return
+                }
 
                     console.log("2")
                 var passKeyMatch = await bcrypt.compare(data.passKey, nodeDetail.passKey)

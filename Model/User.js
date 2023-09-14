@@ -46,31 +46,35 @@ module.exports = class User {
 
     // keys is array of string
     static findUser(nodeId, keys,access = false,userId=-1) {
-        let keystring = "";
+        let keystring = "(";
         let first = true 
+        console.log(keys)
         if(keys){
             
-        keys.forEach(k => {
-            if(first){
-                first = false;
-            }
-            else{
-                keystring += " AND "
-            }
-            keystring += "( u.name LIKE " + db.escape("%" + k + "%") 
-                + " OR u.email LIKE " + db.escape("%" + k + "%") 
-                + " OR u.phone LIKE " + db.escape("%" + k + "%") +" ) "
-        });  
+            keys.forEach(k => {
+                console.log('k',k)
+                if(first){
+                    first = false;
+                }
+                else{
+                    keystring += " AND "
+                }
+                keystring += "( u.name LIKE " + db.escape("%" + k + "%") 
+                    + " OR u.email LIKE " + db.escape("%" + k + "%") 
+                    + " OR u.phone LIKE " + db.escape("%" + k + "%") +" ) "
+            });  
+            keystring += ")"
         }
-        let sql = "SELECT q.userId,q.name,q.email,q.phone FROM "
-            + " (SELECT  u.userId,u.name,u.email,u.phone,MAX(nd.nodeId) as nodeId FROM user u "
-            + " LEFT JOIN node_dir_access nda ON u.userId = nda.userId "
-            + " LEFT JOIN node_dir nd ON nd.pathId = nda.pathId  AND nd.nodeId =" + db.escape(nodeId) 
-            console.log(sql)
-            if (keystring.length > 0){
-                sql += " WHERE  " + keystring ;
-            } 
-            sql += " GROUP by  u.userId) q WHERE q.userId !=" +db.escape(userId)+ " AND q.nodeId IS " +((access == false)? "":"NOT") + " NULL"
+        console.log('keystring',keystring)
+        let sql = "SELECT u.userId,u.name,u.email,u.phone FROM user u LEFT JOIN node_access a ON a.userId = u.userId AND a.nodeId=" + db.escape(nodeId)
+            + " WHERE u.userId !=" + db.escape(userId)
+        if(!access){
+            sql += " AND a.accessId IS NULL "
+        }
+        if(keys.length > 0){
+            sql += " AND " +  keystring
+        }
+ 
         return db.query(sql );
 
     }

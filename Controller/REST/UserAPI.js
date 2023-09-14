@@ -32,7 +32,11 @@ class UserAPI extends RESTController {
                 } 
                 let keys = []
                 if(req.query.k){
-                    keys= [req.query.k]
+                    if (Array.isArray(req.query.k)) {
+                        keys.push(...req.query.k);
+                      } else {
+                        keys.push(req.query.k);
+                      } 
                 }
                 console.log(req.query.k)
                 User.findUser(req.params.nodeId,keys,req.query.access,req.user.id).then((result)=>{
