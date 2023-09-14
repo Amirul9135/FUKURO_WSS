@@ -104,24 +104,20 @@ class NodeConfig {
     } 
  
 
-    static async updateSpec(nodeId,specId,value,dateTime=null){
-        if(dateTime){
-            dateTime = db.escape(db.toLocalSQLDateTime(dateTime))
-        }
-        else{
-            dateTime = "NOW()"
-        }
-        var strSql = "INSERT INTO node_spec (nodeId, specId, dateTime, value) " 
-            + " SELECT  " + db.escape(nodeId) + ", " + db.escape(specId) + ", " + dateTime + ", " + db.escape(value) // value in select
-            + " FROM (SELECT 1) AS dummy " //dummy row as placeholder 1 fixed row
-            + " LEFT JOIN (SELECT value FROM node_spec WHERE specId="+db.escape(specId)+" ORDER BY dateTime DESC LIMIT 1) AS latest" // left join with latest config row
-            + " ON latest.value = " + db.escape(value) // join condition use value equal value being inserted
-            + " WHERE latest.value IS NULL "  // if latest value joined not null means it is equal if not is null insert will happen since 1 row with the data in the dummy select
-        return db.query(strSql) 
-    }
 
-    static async getNodeSpec(nodeId){
-        let sql = "SELECT MAX(dateTime) as dateTime, specId,value FROM node_spec WHERE nodeId="+db.escape(nodeId)+" GROUP by specId"
+    //specs is array of object {specId,value} where id conforms to fukuro standard
+    static async updateSpecs(nodeId,specs){
+        let strsql= "INSERT INTO node_spec (nodeId,specId,value) VALUES "
+        specs.forEach(s=>{
+            strsql += " (" + db.escape(nodeId) + "," + db.escape(s.specId) + ", " + db.escape(s.value) + "),"
+        })
+        strsql = strsql.substring(0, strsql.length - 1);
+        strsql += " ON DUPLICATE KEY UPDATE value = VALUES(value)"
+        return db.query(strsql)
+    }
+ 
+    static async getNodeSpec(nodeId){ 
+        let sql = "SELECT  specId,value FROM node_spec WHERE nodeId="+db.escape(nodeId)
         return db.query(sql);
     }
 

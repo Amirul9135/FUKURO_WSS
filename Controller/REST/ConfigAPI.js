@@ -19,6 +19,8 @@ class ConfigAPI extends RESTController {
                 delete to disable  
         */
 
+
+
         /**** PUSH metric configuration routes ****/
         this._router.get("/:nodeId/push", [this.#checkParam(), this.#fetchConfig([
             CONFIG.PUSH.Interval,
@@ -156,8 +158,9 @@ class ConfigAPI extends RESTController {
         this._router.delete("/:nodeId/disk/:diskname", [this.#checkParam(), this.#updateDiskStat(false)])
 
         /**** Disk  metric configuration routes END ****/
+ 
     }
-
+ 
     #updateDiskStat(enable) {
         return (req, res) => {
             if (!req.params.diskname) {
@@ -171,7 +174,7 @@ class ConfigAPI extends RESTController {
 
                     let agent = this.#cache.findAgent(req.nodeId)
                     if (agent) {//if agent in cahce (online)
-                        agent.refreshDisk()
+                        agent.refreshDiskMonitor()
                     }
                     Node_.logActivity(req.nodeId,"Disk Monitoring Configuration Changed",req.user.id)
                     return res.status(200).send()

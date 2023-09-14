@@ -19,7 +19,7 @@ class ConnectionHandler {
                 message = JSON.parse(message)  
                 console.log(message)
             } catch (e) {
-                ws.send(JSON.stringify({ error: "Unable to connect: invalid message content"  }))
+                ws.send(JSON.stringify({ path:'error', data: "Unable to connect: invalid message content"  }))
                 
                 ws.close()
                 return
@@ -28,7 +28,7 @@ class ConnectionHandler {
 
 
             if (!message.hasOwnProperty("path")) { 
-                ws.send(JSON.stringify({ error: "Unable to connect: invalid message format"  }))
+                ws.send(JSON.stringify({ path:'error', data: "Unable to connect: invalid message format"  }))
                 ws.close()
                 return
             }
@@ -36,13 +36,13 @@ class ConnectionHandler {
             if (message.path == "verify/agent" || message.path == "verify/app") {
 
                 if (!message.data) { 
-                    ws.send(JSON.stringify({ error: "Unable to connect: invalid message content"  }))
+                    ws.send(JSON.stringify({ path:'error', data: "Unable to connect: invalid message content"  }))
                     ws.close()
                     return
                 }
                 let data = message.data
                 if (!data.nodeId || !data.passKey || !data.jwt || !data.uid) {
-                    ws.send(JSON.stringify({ error: "Unable to connect: incomplete verification details"  }))
+                    ws.send(JSON.stringify({ path:'error', data: "Unable to connect: incomplete verification details"  }))
                     ws.close()
                     return
                 }
@@ -51,24 +51,24 @@ class ConnectionHandler {
                 var user = Auth.verifyJWT(uid, data.jwt)
                 console.log(message) 
                 if (!user) {
-                    ws.send(JSON.stringify({ error: "Unable to connect: invalid token"  }))
+                    ws.send(JSON.stringify({ path:'error', data: "Unable to connect: invalid token"  }))
                     ws.close()
                     return
                 }
                 console.log("1")
                 //check user access to the node
                 var nodeDetail = await Node_.findNode(data.nodeId, user.id).catch(function (err) {
-                    ws.send(JSON.stringify({ error: "Unable to connect: cannot find node, please ensure you have access"  }))
+                    ws.send(JSON.stringify({ path:'error', data: "Unable to connect: cannot find node, please ensure you have access"  }))
                     ws.close()
                 })
                 console.log("node detail",nodeDetail)
                 if (!nodeDetail ){
-                    ws.send(JSON.stringify({ error: "Unable to connect: cannot find node, please ensure you have access"  }))
+                    ws.send(JSON.stringify({ path:'error', data: "Unable to connect: cannot find node, please ensure you have access"  }))
                     ws.close()
                     return
                 }
                 if(nodeDetail.accessId != 1){ //not admin 
-                    ws.send(JSON.stringify({ error: "Unable to connect: Unauthorized, only admin may start monitoring"  }))
+                    ws.send(JSON.stringify({ path:'error', data: "Unable to connect: Unauthorized, only admin may start monitoring"  }))
                     ws.close()
                     return
                 }
@@ -78,7 +78,7 @@ class ConnectionHandler {
 
                 //verify pass key 
                 if (!passKeyMatch) {
-                    ws.send(JSON.stringify({ error: "Unable to connect: invalid pass key"  }))
+                    ws.send(JSON.stringify({ path:'error', data: "Unable to connect: invalid pass key"  }))
                     ws.close()
                     return
                 }
@@ -95,7 +95,7 @@ class ConnectionHandler {
                     //check agent available or not
                     let agent = WsClientCache.findAgent(nodeDetail.nodeId)
                     if (!agent) {
-                        ws.send(JSON.stringify({ error: "Unable to connect:  is offline" }))
+                        ws.send(JSON.stringify({ path:'error', data: "Unable to connect:  is offline" }))
                         ws.close()
                         return
                     }

@@ -16,7 +16,7 @@ class NodeAPI extends RESTController {
     this._router.get("/:nodeId", this.#nodeDetails())
     this._router.put("/", this.#updateNode())
     this._router.get("/:nodeId/info", this.#getSpec())
-    this._router.get("/:nodeId/log/:dateFrom", this.#getLog())
+    this._router.get("/:nodeId/log/:start/:end", this.#getLog())
     // tb rmv this._router.post("/:nodeId/grant/:userId",this.#toggleAccess(true))
     // tb rmv this._router.delete("/:nodeId/grant/:userId",this.#toggleAccess(false))
 
@@ -27,28 +27,32 @@ class NodeAPI extends RESTController {
     this._router.delete("/:nodeId/access/:userId", this.#removeAccess())
   }
   #getLog() {
-    return async (req, res) => {
+    return [
+      this._auth.authRequest(),
+      async (req, res) => {
 
-      try {
-        parseInt(req.params.nodeId)
-        new Date(req.params.dateFrom)
+        try {
+          parseInt(req.params.nodeId)
+          new Date(req.params.start)
+          new Date(req.params.end)
+        }
+        catch (e) {
+          return res.status(400).send({ message: "Invalid node id or date from" })
+        }
+  
+        var nodeDetail = await Node_.findNode(req.params.nodeId, req.user.id).catch(function (err) {
+          return res.status(401).send({ message: "Unauthorized to view this node log" })
+        })
+        if (!nodeDetail) {
+          return res.status(401).send({ message: "Unauthorized to view this node log" })
+        }
+        Node_.fetchNodeLog(req.params.nodeId, req.params.start,req.params.end).then((result) => {
+          return res.status(200).send(result)
+        }).catch((error)=>{
+          return res.status(500).send({message:error.message})
+        })
       }
-      catch (e) {
-        return res.status(400).send({ message: "Invalid node id or date from" })
-      }
-
-      var nodeDetail = await Node_.findNode(req.nodeId, req.user.id).catch(function (err) {
-        return res.status(401).send({ message: "Unauthorized to view this node log" })
-      })
-      if (!nodeDetail) {
-        return res.status(401).send({ message: "Unauthorized to view this node log" })
-      }
-      Node_.nodeLogFrom(req.params.nodeId, req.params.dateFrom).then((result) => {
-        return res.status(200).send(result)
-      }).catch((error)=>{
-        return res.status(500).send({message:error.message})
-      })
-    }
+    ]
   }
 
   #grantAccess(role) {

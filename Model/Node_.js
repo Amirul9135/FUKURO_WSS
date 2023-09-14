@@ -1,6 +1,5 @@
 
-const db = require("../Controller/Database")
-const NodeConfig = require("./NodeConfig")
+const db = require("../Controller/Database")  
 
 module.exports = class Node_ {
     nodeId
@@ -122,8 +121,10 @@ module.exports = class Node_ {
         return db.query(sql)
     }
 
-    static nodeLogFrom(nodeId,dateFrom){
-        let sql = "SELECT * FROM node_log WHERE nodeId=" + db.escape(nodeId) + " AND dateTime >= " + db.escape(db.toLocalSQLDateTime(dateFrom))
+    static fetchNodeLog(nodeId,dateStart,dateEnd){
+        let sql = "SELECT nl.*,u.name FROM node_log nl LEFT JOIN user u ON u.userId=nl.userId"
+             + " WHERE nl.nodeId=" + db.escape(nodeId) + " AND nl.dateTime >= " + db.escape(db.toLocalSQLDateTime(dateStart))
+             + " AND nl.dateTime <= "+ db.escape(db.toLocalSQLDateTime(dateEnd)) + " ORDER BY nl.dateTime DESC"
         return db.query(sql)
     }
 

@@ -194,19 +194,7 @@ class AgentClient extends WsClient {
             MetricController.saveReadings(FUKURO.RESOURCE.cpu, this.#node.nodeId, readings['cpu'])
         }
         if (readings['mem']) {
-            MetricController.saveReadings(FUKURO.RESOURCE.mem, this.#node.nodeId, readings['mem'])
-            let memTotals = [] //{dt:,val:}
-            let dates = []
-            readings['mem'].forEach(r => {
-                if (!memTotals.includes(r.total))
-                    memTotals.push(r.total)
-                dates.push(r.dateTime)
-            })
-            if (memTotals) {
-                for (let i = 0; i < memTotals.length; i++) {
-                    NodeConfig.updateSpec(this.#node.nodeId, FUKURO.SPEC.totalMemory, memTotals[i], dates[i])
-                }
-            }
+            MetricController.saveReadings(FUKURO.RESOURCE.mem, this.#node.nodeId, readings['mem'])   
         }
         if (readings['dsk']) {
             MetricController.saveReadings(FUKURO.RESOURCE.dsk, this.#node.nodeId, readings['dsk'])
@@ -314,17 +302,23 @@ class AgentClient extends WsClient {
     async #saveSpec(msg) {
         console.log(msg)
         if (msg.path == 'post/spec/disk') {
-            NodeConfig.updateDisk(this.#node.nodeId, msg.data)
+            await NodeConfig.updateDisk(this.#node.nodeId, msg.data)
         }
         else if (msg.path == 'post/spec/cpu') {
             let cpu = msg.data
-            await NodeConfig.updateSpec(this.#node.nodeId, FUKURO.SPEC.cpuName, cpu.name)
-            await NodeConfig.updateSpec(this.#node.nodeId, FUKURO.SPEC.cpuFreq, cpu.freq)
-            await NodeConfig.updateSpec(this.#node.nodeId, FUKURO.SPEC.cpuCore, cpu.cache)
-            await NodeConfig.updateSpec(this.#node.nodeId, FUKURO.SPEC.cpuCache, cpu.cores)
+            let arr = [
+                {specId:FUKURO.SPEC.cpuName ,value:cpu.name},
+                {specId: FUKURO.SPEC.cpuFreq,value: cpu.freq},
+                {specId:FUKURO.SPEC.cpuCore ,value: cpu.cores},
+                {specId:  FUKURO.SPEC.cpuCache,value:cpu.cache},
+            ]
+            await NodeConfig.updateSpecs(this.#node.nodeId, arr) 
         }
         else if (msg.path == 'post/spec/ip') {
-            NodeConfig.updateSpec(this.#node.nodeId, FUKURO.SPEC.ipAddress, msg.data)
+            await NodeConfig.updateSpecs(this.#node.nodeId,  [{specId:  FUKURO.SPEC.ipAddress,value:msg.data}] )
+        }
+        else if (msg.path == 'post/spec/mem') {
+            await NodeConfig.updateSpecs(this.#node.nodeId,  [{specId:  FUKURO.SPEC.totalMemory,value:msg.data}] )
         }
 
     }

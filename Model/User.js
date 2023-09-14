@@ -71,6 +71,9 @@ module.exports = class User {
         if(!access){
             sql += " AND a.accessId IS NULL "
         }
+        else{
+            sql += " AND a.accessId IS NOT NULL "
+        }
         if(keys.length > 0){
             sql += " AND " +  keystring
         }

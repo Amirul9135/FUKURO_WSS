@@ -95,7 +95,7 @@ class FUKURO {
             switch(specId){
                 case FUKURO.SPEC.cpuName:return "CPU Name"
                 case FUKURO.SPEC.cpuFreq:return "CPU Frequency"
-                case FUKURO.SPEC.cpuCore:return "CPU Corese"
+                case FUKURO.SPEC.cpuCore:return "CPU Cores"
                 case FUKURO.SPEC.cpuCache: return"CPU Cache"
                 case FUKURO.SPEC.totalMemory: return"Memory"
                 case FUKURO.SPEC.ipAddress: return "IP Address"
