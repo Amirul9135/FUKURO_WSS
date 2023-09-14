@@ -302,7 +302,7 @@ FUKURO.CONFIGURE({id: FUKURO.MONITORING.DSK.ALERT.Cooldown,
 /**net configuration mapping */
 FUKURO.CONFIGURE({id: FUKURO.MONITORING.NET.ALERT.Threshold,path: 'alert/threshold/net',
     name: 'threshold',
-    minVal: 1,
+    minVal: 500,//kbps
     defVal: 0 // by default notification is disabled
 }) 
 FUKURO.CONFIGURE({id: FUKURO.MONITORING.NET.INTERVAL.Extract,

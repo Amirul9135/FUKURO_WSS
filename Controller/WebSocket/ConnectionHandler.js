@@ -66,12 +66,7 @@ class ConnectionHandler {
                     ws.send(JSON.stringify({ path:'error', data: "Unable to connect: cannot find node, please ensure you have access"  }))
                     ws.close()
                     return
-                }
-                if(nodeDetail.accessId != 1){ //not admin 
-                    ws.send(JSON.stringify({ path:'error', data: "Unable to connect: Unauthorized, only admin may start monitoring"  }))
-                    ws.close()
-                    return
-                }
+                } 
 
                     console.log("2")
                 var passKeyMatch = await bcrypt.compare(data.passKey, nodeDetail.passKey)
@@ -85,7 +80,18 @@ class ConnectionHandler {
 
                 if (message.path == "verify/agent") {
                     //agent client
-
+                    if(nodeDetail.accessId != 1){
+                        
+                        ws.send(JSON.stringify({ path:'error', data: "Unauthorized, only admin user may starts monitoring" }))
+                        ws.close()
+                        return
+                    } 
+                    if(WsClientCache.findAgent(nodeDetail.nodeId)){
+                        
+                        ws.send(JSON.stringify({ path:'error', data: "Unable to connect, other instance of agent is already online" }))
+                        ws.close()
+                        return
+                    }
                     //create handler object for the agent client
                     let agent = new AgentClient(ws, nodeDetail,WsClientCache)
                 }

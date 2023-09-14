@@ -66,7 +66,7 @@ module.exports = class User {
             keystring += ")"
         }
         console.log('keystring',keystring)
-        let sql = "SELECT u.userId,u.name,u.email,u.phone FROM user u LEFT JOIN node_access a ON a.userId = u.userId AND a.nodeId=" + db.escape(nodeId)
+        let sql = "SELECT u.userId,u.name,u.email,u.phone,a.accessId FROM user u LEFT JOIN node_access a ON a.userId = u.userId AND a.nodeId=" + db.escape(nodeId)
             + " WHERE u.userId !=" + db.escape(userId)
         if(!access){
             sql += " AND a.accessId IS NULL "

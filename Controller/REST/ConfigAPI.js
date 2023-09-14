@@ -262,7 +262,7 @@ class ConfigAPI extends RESTController {
                 return res.status(500).send({message : "Unable to verify access"})
             })
             if(!admin){
-                return res.status(401).send({message : "Unauthorized to change configureation"})
+                return res.status(401).send({message : "Unauthorized to change configuration"})
             }
             
             // validation and determine wether to update or remove(if same with default)
@@ -334,7 +334,7 @@ class ConfigAPI extends RESTController {
                 return res.status(500).send({message:"Unable to verify access"})
             })
             if(!admin){
-                return res.status(401).send({message:"Unauthorized to change configureation"})
+                return res.status(401).send({message:"Unauthorized to change configuration"})
             }
             let msg = (enable) ? "Enable" : "Disable"
             // record of toggle in database indicates that the config is disabled

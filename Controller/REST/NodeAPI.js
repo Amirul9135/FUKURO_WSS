@@ -17,8 +17,7 @@ class NodeAPI extends RESTController {
     this._router.put("/", this.#updateNode())
     this._router.get("/:nodeId/info", this.#getSpec())
     this._router.get("/:nodeId/log/:start/:end", this.#getLog())
-    // tb rmv this._router.post("/:nodeId/grant/:userId",this.#toggleAccess(true))
-    // tb rmv this._router.delete("/:nodeId/grant/:userId",this.#toggleAccess(false))
+    
 
     //access
     this._router.post("/:nodeId/access/admin/:userId", this.#grantAccess(1))
