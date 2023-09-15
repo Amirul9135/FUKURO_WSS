@@ -14,6 +14,7 @@ class UserAPI extends RESTController {
         this._router.post("/", this.#registerUser())
         this._router.post("/login", this.#login())
         this._router.put("/",this.#updateUser())
+        this._router.put('/pass',this.#changePass())
         this._router.get("/",this.#getUser())
         this._router.get("/logout",this.#logout())
         //simple verification route to only check token
@@ -24,6 +25,36 @@ class UserAPI extends RESTController {
         //access=true/false
         this._router.get("/find/:nodeId",[this._auth.authRequest(),this.#findUser()]) 
     }
+
+    #changePass(){
+        return [
+            this._auth.authRequest(), 
+            this._validator.checkString("password", { min: 6 }, "password must be at least 6 character"),
+            this._validator.checkString("newpassword", { min: 6 }, "password must be at least 6 character"),
+            this._validator.validate(),
+            async function (req, res) {
+                let usr = new User({userId:req.user.id})
+                await usr.loadPass()
+                var isMatch = await bcrypt.compare(req.body.password, usr.password)
+                if(!isMatch){
+                    return res.status(401).send({message:"Current Password Doesn't match"})
+                }
+                
+                var salt = await bcrypt.genSalt(10)
+                var hashed = await bcrypt.hash(req.body.newpassword, salt) 
+
+                usr.password = hashed
+                usr.upatePass().then((result)=>{
+                    return res.status(200).send();
+                }).catch((error)=>{
+                    return res.status(500).send({message: error.message})
+                })
+                
+                
+            }
+        ]
+    }
+
     #findUser(){
         return [
             (req,res)=>{ 

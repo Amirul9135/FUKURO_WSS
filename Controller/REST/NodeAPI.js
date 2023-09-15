@@ -4,6 +4,7 @@ const Node_ = require("../../Model/Node_");
 const NodeConfig = require("../../Model/NodeConfig")
 const bcrypt = require("bcryptjs");
 const FUKURO = require("../../FUKURO");
+const { FUKURO_OS } = require("../OneSignal")
 
 class NodeAPI extends RESTController {
   constructor() {
@@ -17,7 +18,8 @@ class NodeAPI extends RESTController {
     this._router.put("/", this.#updateNode())
     this._router.get("/:nodeId/info", this.#getSpec())
     this._router.get("/:nodeId/log/:start/:end", this.#getLog())
-    
+    this._router.put("/:nodeId/pass", this.#changePassKey())
+
 
     //access
     this._router.post("/:nodeId/access/admin/:userId", this.#grantAccess(1))
@@ -25,6 +27,60 @@ class NodeAPI extends RESTController {
     this._router.post("/:nodeId/access/guest/:userId", this.#grantAccess(3))
     this._router.delete("/:nodeId/access/:userId", this.#removeAccess())
   }
+
+  #changePassKey() {
+
+    return [
+      this._auth.authRequest(),
+      this._validator.checkString("passKey", { min: 6 }, "passKey must be at least 6 character"),
+      this._validator.checkString("newpassKey", { min: 6 }, "passKey must be at least 6 character"),
+      this._validator.validate(),
+      async function (req, res) {
+
+        try {
+          parseInt(req.params.nodeId)
+        }
+        catch (e) {
+          return res.status(400).send({ message: "Invalid node id" })
+        }
+        let node = new Node_({ nodeId: req.params.nodeId })
+        await node.loadPassKey()
+        var isMatch = await bcrypt.compare(req.body.passKey, node.passKey)
+        if (!isMatch) {
+          return res.status(401).send({ message: "Current Pass Key Doesn't match" })
+        }
+
+        var salt = await bcrypt.genSalt(10)
+        var hashed = await bcrypt.hash(req.body.newpassKey, salt)
+
+        node.passKey = hashed
+        node.updatePassKey(req.user.id).then((result) => {
+
+          Node_.findAllAssociatedUser(req.params.nodeId).then((result) => {
+            if (result.length > 0) {
+              let ids = [];
+              result.forEach((i) => {
+                ids.push(i["userId"].toString())
+              });
+              FUKURO_OS.sendNotification(ids, "Agent " + node.name
+                + " Pass Key Changed", "The pass key has been changed, please refer to your node admins for futher details",
+                { dateTime: new Date().toISOString() })
+            }
+          }).catch((err) => {
+            console.log("agent client handler error " + err)
+          })
+
+          Node_.logActivity(req.params.nodeId, "Pass Key changed", req.user.id)
+          return res.status(200).send();
+        }).catch((error) => {
+          return res.status(500).send({ message: error.message })
+        })
+
+
+      }
+    ]
+  }
+
   #getLog() {
     return [
       this._auth.authRequest(),
@@ -38,17 +94,17 @@ class NodeAPI extends RESTController {
         catch (e) {
           return res.status(400).send({ message: "Invalid node id or date from" })
         }
-  
+
         var nodeDetail = await Node_.findNode(req.params.nodeId, req.user.id).catch(function (err) {
           return res.status(401).send({ message: "Unauthorized to view this node log" })
         })
         if (!nodeDetail) {
           return res.status(401).send({ message: "Unauthorized to view this node log" })
         }
-        Node_.fetchNodeLog(req.params.nodeId, req.params.start,req.params.end).then((result) => {
+        Node_.fetchNodeLog(req.params.nodeId, req.params.start, req.params.end).then((result) => {
           return res.status(200).send(result)
-        }).catch((error)=>{
-          return res.status(500).send({message:error.message})
+        }).catch((error) => {
+          return res.status(500).send({ message: error.message })
         })
       }
     ]

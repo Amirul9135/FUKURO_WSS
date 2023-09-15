@@ -10,6 +10,20 @@ module.exports = class User {
     pin
     deactivated
 
+    async upatePass(){
+        return db.queryParams('UPDATE user SET password=:password: WHERE userId=:userId:',this)
+    }
+    async loadPass(){
+        let sql = "SELECT password FROM user WHERE userId=:userId:"
+        let result = await db.queryParams(sql,this)
+        if(result){
+            this.password = result[0]['password']
+        }
+        else{
+            throw Error("User not found")
+        }
+    }
+
     async register() {
         let strSql = "INSERT INTO user(name,username,password,email,phone) VALUES "
             + "(:name:,:username:,:password:,:email:,:phone:)"

@@ -8,6 +8,27 @@ module.exports = class Node_ {
     passKey
     configs
 
+    async updatePassKey(uid){
+        
+        if(! await Node_.isAdmin(uid,this.nodeId)){ 
+            throw Error("Unauthorized, only admin user can change pass key")
+        } 
+        
+        return db.queryParams('UPDATE node SET passKey=:passKey: WHERE nodeId=:nodeId:',this)
+    }
+    async loadPassKey(){
+        
+        let sql = "SELECT name, passKey FROM node WHERE nodeId=:nodeId:"
+        let result = await db.queryParams(sql,this)
+        if(result){
+            this.passKey = result[0]['passKey']
+            this.name = result[0]['name']
+        }
+        else{
+            throw Error("Node not found")
+        }
+    }
+    
 
     async register() {
         let strSql = "INSERT INTO node(name,description,passKey) VALUES(:name:,:description:,:passKey:)"
