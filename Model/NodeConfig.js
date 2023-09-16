@@ -123,15 +123,21 @@ class NodeConfig {
 
     //value example { sda: 26214400, sda1: 512, sda2: 262656, sda3: 25950208 }
     static async updateDisk(nodeId,value){
-
-        await db.query("DELETE FROM node_disk WHERE nodeId="+db.escape(nodeId)).catch((err)=>{
-            console.log("Error flushing disk")
-        })
+        
 
         let strSql = "INSERT into node_disk(nodeId,name,size,used) VALUES "
+        let nameString = ""
         Object.keys(value).forEach(k=>{
             strSql += "("+ db.escape(nodeId) + "," + db.escape(k) +"," + db.escape(value[k].size) +"," + db.escape(value[k].used) + "),"
+            nameString += db.escape(k) + ","
         })
+        if(nameString.length > 0){
+            nameString = nameString.substring(0, strSql.length - 1) 
+        }
+        
+        await db.query("DELETE FROM node_disk WHERE nodeId="+db.escape(nodeId) + " AND name NOT IN(" +nameString+ ")").catch((err)=>{
+            console.log("Error flushing disk")
+        }) 
         strSql = strSql.substring(0, strSql.length - 1) + " ON DUPLICATE KEY UPDATE size = VALUES(size),used =VALUES(used) "
         return db.query(strSql)
 
