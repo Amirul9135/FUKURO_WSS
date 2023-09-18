@@ -85,7 +85,11 @@ class Database {
     toLocalSQLDateTime(strDate){ 
         let dto = new Date(strDate)
   
-        return dto.toLocaleDateString('en-CA').replace(',','') + " " + dto.toLocaleTimeString('en-CA', {hour12:false});    
+        return dto.toLocaleDateString('en-CA',{
+    hourCycle: 'h23'
+}).replace(',','') + " " + dto.toLocaleTimeString('en-CA',{
+    hourCycle: 'h23'
+});    
     }
 
 }
