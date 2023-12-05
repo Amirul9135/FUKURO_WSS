@@ -1,4 +1,5 @@
 const mysql = require('mysql');
+const config = require("config")
 
 class Database {
     #pool 
@@ -96,10 +97,10 @@ class Database {
 
 // Singleton pattern
 const fukuroDb = new Database({
-    host: "localhost",
-    user: "root",
-    password: "",
-    database: "fukurodb"
+    host: config.get("DBHost"),
+    user: config.get("DBUser"),
+    password: config.get("DBPass"),
+    database: config.get("DBName")
 });
 
 module.exports = fukuroDb;
