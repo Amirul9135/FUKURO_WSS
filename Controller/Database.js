@@ -20,7 +20,7 @@ class Database {
             });
         })
     }
-
+ 
     query(sql){
         console.log("string query",sql)
         return new Promise((resolve, reject) => {

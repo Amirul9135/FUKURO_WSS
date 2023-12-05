@@ -1,4 +1,5 @@
-const OneSignal = require('onesignal-node');     
+const OneSignal = require('onesignal-node');    
+const config = require("config"); 
 
 class OneSignalController{
 
@@ -27,7 +28,7 @@ class OneSignalController{
     }
 }
 
-const FUKURO_OS = new OneSignalController('aeb81c01-4529-41bb-b7be-fb6be3dbece7', 'ZTI5MTA5YjEtMTRhYi00ZDFkLWE5MTgtODY4NWI5OGQ0ZjQ1') 
+const FUKURO_OS = new OneSignalController(config.get("OSId"), config.get("OSKey")) 
 module.exports = {
   OneSignalController,
   FUKURO_OS
